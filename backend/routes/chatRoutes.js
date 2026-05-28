@@ -72,13 +72,18 @@ router.post("/speech-to-text", upload.single("audio"), async (req, res) => {
     console.log("Processing audio with Groq Whisper API...");
     
     const cleanMimeType = req.file.mimetype.split(';')[0].trim();
-    const extension = cleanMimeType.includes('webm') ? 'webm' : 'wav';
+    // Use the original filename to preserve the correct extension (e.g., .webm or .wav)
+    // If the frontend sends recording.webm, we MUST pass it as .webm to Groq so it parses the container correctly.
+    const originalExt = req.file.originalname.split('.').pop() || 'webm';
+    const extension = ['webm', 'wav', 'mp3', 'm4a', 'ogg', 'flac'].includes(originalExt.toLowerCase()) 
+        ? originalExt.toLowerCase() 
+        : (cleanMimeType.includes('webm') ? 'webm' : 'wav');
     
     // Use form-data package for guaranteed Node compatibility
     const formData = new FormData();
     formData.append('file', req.file.buffer, {
       filename: `audio.${extension}`,
-      contentType: cleanMimeType,
+      contentType: cleanMimeType === 'application/octet-stream' ? 'audio/webm' : cleanMimeType,
     });
     formData.append('model', 'whisper-large-v3-turbo'); 
     formData.append('language', 'en');
