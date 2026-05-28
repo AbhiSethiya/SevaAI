@@ -106,7 +106,9 @@ export class SpeechAPI {
         }
       };
 
-      this.mediaRecorder.start();
+      // Collect data every 250ms to ensure chunks are actually populated
+      // (Fixes Chrome bug where a single chunk at the end is sometimes empty)
+      this.mediaRecorder.start(250);
       return stream;
     } catch (error) {
       throw new Error("Failed to access microphone");

@@ -397,6 +397,13 @@ const Chatbot = () => {
       setIsTyping(true); // Show typing while transcribing
       const audioBlob = await stopRecording();
 
+      // Check if the recording is too short/empty (WebM header is ~10-200 bytes, valid audio is much larger)
+      if (audioBlob.size < 1000) {
+        setIsTyping(false);
+        alert("Recording was too short. Please speak for at least a few seconds.");
+        return;
+      }
+
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.webm");
 
