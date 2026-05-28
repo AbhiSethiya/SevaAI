@@ -344,6 +344,9 @@ export class SpeechAPI {
             voice: utterance.voice?.name,
           });
 
+          // CRITICAL FIX: Keep a global reference so the browser garbage collector
+          // doesn't destroy the utterance before it finishes speaking (known Chrome bug).
+          window._activeUtterance = utterance;
           window.speechSynthesis.speak(utterance);
         };
 

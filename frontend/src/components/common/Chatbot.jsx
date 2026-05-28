@@ -433,13 +433,8 @@ const Chatbot = () => {
         setIsRecording(true);
         setPendingTranscription("");
         
-        let hasTriggeredAutoStop = false;
-        await startRecording(() => {
-          if (!hasTriggeredAutoStop) {
-             hasTriggeredAutoStop = true;
-             stopAndProcessRecording();
-          }
-        });
+        // Removed auto-stop (silence detection). User must click mic again to stop.
+        await startRecording();
       } catch (error) {
         console.error("Recording error:", error);
         setIsRecording(false);
