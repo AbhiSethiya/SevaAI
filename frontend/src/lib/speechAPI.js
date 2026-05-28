@@ -1,4 +1,6 @@
 // Speech API utilities
+import toWav from 'audiobuffer-to-wav';
+
 export class SpeechAPI {
   static instance = null;
   mediaRecorder = null;
@@ -140,28 +142,45 @@ export class SpeechAPI {
 
       let resolved = false;
 
-      // Fallback timeout in case onstop never fires (or crashes)
-      const forceResolveTimeout = setTimeout(() => {
-        if (!resolved) {
-          console.warn("MediaRecorder onstop timeout - forcing resolution");
-          resolved = true;
-          const mimeType = this.mediaRecorder ? this.mediaRecorder.mimeType : 'audio/webm';
-          const audioBlob = new Blob(this.audioChunks, { type: mimeType });
-          this.mediaRecorder = null;
-          resolve(audioBlob);
+      const createWavBlob = async (chunks) => {
+        try {
+          const webmBlob = new Blob(chunks, { type: 'audio/webm' });
+          if (webmBlob.size < 1000) return webmBlob; // Too small, let the size check catch it
+          
+          const arrayBuffer = await webmBlob.arrayBuffer();
+          // Always create a fresh AudioContext for decoding
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+          
+          const wavArrayBuffer = toWav(audioBuffer);
+          
+          // Cleanup context
+          if (ctx.state !== 'closed') ctx.close().catch(console.error);
+          
+          return new Blob([wavArrayBuffer], { type: 'audio/wav' });
+        } catch (e) {
+          console.error("Failed to convert WebM to WAV:", e);
+          return new Blob(chunks, { type: 'audio/webm' });
         }
-      }, 1000);
+      };
 
-      this.mediaRecorder.onstop = () => {
+      const handleStop = async () => {
         if (!resolved) {
           resolved = true;
           clearTimeout(forceResolveTimeout);
-          const mimeType = this.mediaRecorder ? this.mediaRecorder.mimeType : 'audio/webm';
-          const audioBlob = new Blob(this.audioChunks, { type: mimeType });
+          const wavBlob = await createWavBlob(this.audioChunks);
           this.mediaRecorder = null;
-          resolve(audioBlob);
+          resolve(wavBlob);
         }
       };
+
+      // Fallback timeout in case onstop never fires (or crashes)
+      const forceResolveTimeout = setTimeout(() => {
+        console.warn("MediaRecorder onstop timeout - forcing resolution");
+        handleStop();
+      }, 1500);
+
+      this.mediaRecorder.onstop = handleStop;
 
       try {
         this.mediaRecorder.requestData(); // Get any remaining chunks
