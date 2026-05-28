@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const Complaint = require("./models/Complaint");
 const generateTicketId = require("./utils/generateTicketId");
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/sevaai"; // Add your remote URI if needed here
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://nothing:nothing@cluster0.spmi8gv.mongodb.net/?appName=Cluster0"; // Add your remote URI if needed here
 
 // Indore base coordinates
 const BASE_LAT = 22.7196;
@@ -111,7 +111,7 @@ async function seedDatabase() {
     // await Complaint.deleteMany({}); 
 
     console.log("Generating realistic complaint data...");
-    
+
     // Some random user IDs (you can replace these with actual user ObjectIds if you want)
     const dummyUserId = new mongoose.Types.ObjectId();
 
@@ -128,7 +128,7 @@ async function seedDatabase() {
         refinedText: data.refinedText,
         department: data.department,
         aiSuggestedDepartment: data.department,
-        aiConfidence: Math.floor(Math.random() * 20) + 80, // 80-99%
+        aiConfidence: 0.8 + (Math.random() * 0.19), // 0.80-0.99
         coordinates: getRandomCoordinates(),
         locationName: data.locationName,
         priority: data.priority,
