@@ -56,37 +56,71 @@ const FormData = require('form-data');
 router.post("/speech-to-text", upload.single("audio"), async (req, res) => {
   try {
     console.log("Speech-to-text request received");
-    
+
     if (!req.file) {
       console.log("No audio file provided");
       return res.status(400).json({ error: "No audio file provided" });
     }
 
-    if (!process.env.GROQ_API_KEY) {
-      console.log("Groq API not configured");
+    if (!process.env.GROQ_API_KEY && !genAI) {
+      console.log("No AI API configured");
       return res.status(500).json({
-        error: "Speech recognition service not available - GROQ_API_KEY missing",
+        error: "Speech recognition service not available - missing API keys",
       });
     }
 
-    console.log("Processing audio with Groq Whisper API...");
-    
     const cleanMimeType = req.file.mimetype.split(';')[0].trim();
+
+    // Try Gemini first as it has excellent Hinglish/Hindi support
+    if (genAI) {
+      try {
+        console.log("Processing audio with Gemini 3.5 Flash...");
+        const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+
+        const mimeType = cleanMimeType === 'application/octet-stream' ? 'audio/webm' : cleanMimeType;
+
+        const audioPart = {
+          inlineData: {
+            data: req.file.buffer.toString("base64"),
+            mimeType: mimeType
+          }
+        };
+
+        const prompt = "Transcribe the following audio exactly as spoken. It may contain Hindi, English, or Hinglish. Only output the transcription text, do not translate or add any conversational text.";
+
+        const result = await model.generateContent([prompt, audioPart]);
+        const text = result.response.text().trim();
+
+        console.log("Transcription successful (Gemini):", text);
+        return res.json({ text });
+      } catch (geminiError) {
+        console.error("Gemini STT failed, falling back to Groq:", geminiError.message);
+        // Fall through to Groq
+      }
+    }
+
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({ error: "Speech recognition failed and fallback not configured" });
+    }
+
+    console.log("Processing audio with Groq Whisper API...");
+
     // Use the original filename to preserve the correct extension (e.g., .webm or .wav)
     // If the frontend sends recording.webm, we MUST pass it as .webm to Groq so it parses the container correctly.
     const originalExt = req.file.originalname.split('.').pop() || 'webm';
-    const extension = ['webm', 'wav', 'mp3', 'm4a', 'ogg', 'flac'].includes(originalExt.toLowerCase()) 
-        ? originalExt.toLowerCase() 
-        : (cleanMimeType.includes('webm') ? 'webm' : 'wav');
-    
+    const extension = ['webm', 'wav', 'mp3', 'm4a', 'ogg', 'flac'].includes(originalExt.toLowerCase())
+      ? originalExt.toLowerCase()
+      : (cleanMimeType.includes('webm') ? 'webm' : 'wav');
+
     // Use form-data package for guaranteed Node compatibility
     const formData = new FormData();
     formData.append('file', req.file.buffer, {
       filename: `audio.${extension}`,
       contentType: cleanMimeType === 'application/octet-stream' ? 'audio/webm' : cleanMimeType,
     });
-    formData.append('model', 'whisper-large-v3-turbo'); 
-    formData.append('language', 'en');
+    formData.append('model', 'whisper-large-v3-turbo');
+    // Passing prompt for Hinglish/Hindi to help Groq's whisper model
+    formData.append('prompt', 'This audio may contain Hindi, English, or Hinglish sentences. Please transcribe accurately.');
 
     const response = await axios.post('https://api.groq.com/openai/v1/audio/transcriptions', formData, {
       headers: {
@@ -136,13 +170,14 @@ async function generateChatResponse(message, conversationHistory = []) {
   // Use Gemini for general conversation if available
   if (genAI) {
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+
 
       const context =
         conversationHistory.length > 0
           ? `Previous conversation:\n${conversationHistory
-              .map((msg) => `${msg.sender}: ${msg.text}`)
-              .join("\n")}\n\n`
+            .map((msg) => `${msg.sender}: ${msg.text}`)
+            .join("\n")}\n\n`
           : "";
 
       const prompt = `${context}You are a helpful municipal assistant chatbot. The user is interacting with a municipal complaints system. 
