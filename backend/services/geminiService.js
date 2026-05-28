@@ -8,10 +8,7 @@ const genAI = process.env.GEMINI_API_KEY
 async function analyze(rawText) {
   if (!genAI) return { error: "Gemini API not configured" };
 
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    // Prompt for Gemini
     const prompt = `
 You are an intelligent municipal assistant. Analyze the following user input and respond ONLY in valid JSON.
 
@@ -84,7 +81,21 @@ Output:
 Now analyze the user input and return JSON only.
 `;
 
-    const response = await model.generateContent(prompt);
+  try {
+    let response;
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      response = await model.generateContent(prompt);
+    } catch(err) {
+      if (err.message && err.message.includes("404")) {
+         console.warn("gemini-1.5-flash not found, falling back to gemini-pro");
+         const fallbackModel = genAI.getGenerativeModel({ model: "gemini-pro" });
+         response = await fallbackModel.generateContent(prompt);
+      } else {
+         throw err;
+      }
+    }
+    
     let text = response.response.text().trim();
 
     // Remove triple backticks and language hints
