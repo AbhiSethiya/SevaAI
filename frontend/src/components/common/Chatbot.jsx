@@ -391,9 +391,67 @@ const Chatbot = () => {
     }
   };
 
+  const startSpeechRecognition = (retryCount = 0) => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in your browser. Please use Chrome or Edge.");
+      setIsRecording(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-IN";
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    recognition.maxAlternatives = 1;
+
+    window._activeSpeechRecognition = recognition;
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      console.log("Speech recognized:", transcript);
+      setPendingTranscription(transcript);
+      setIsRecording(false);
+      window._activeSpeechRecognition = null;
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error, "attempt:", retryCount);
+      window._activeSpeechRecognition = null;
+
+      if (event.error === "network" && retryCount < 3) {
+        console.log("Network error, retrying in 500ms... (attempt " + (retryCount + 1) + ")");
+        setTimeout(() => {
+          startSpeechRecognition(retryCount + 1);
+        }, 500);
+        return;
+      }
+
+      setIsRecording(false);
+      if (event.error === "no-speech") {
+        alert("No speech was detected. Please try again.");
+      } else if (event.error === "not-allowed") {
+        alert("Microphone access was denied. Please allow microphone permissions.");
+      } else if (event.error === "network") {
+        alert("Speech recognition needs a network connection. Please check your internet and try again.");
+      } else if (event.error !== "aborted") {
+        alert("Speech recognition failed: " + event.error);
+      }
+    };
+
+    recognition.onend = () => {
+      // Only reset if no retry is happening
+      if (!window._activeSpeechRecognition) {
+        setIsRecording(false);
+      }
+    };
+
+    recognition.start();
+    console.log("Speech recognition started (attempt " + retryCount + ")");
+  };
+
   const handleSpeechToText = async () => {
     if (isRecording) {
-      // Manual stop
       setIsRecording(false);
       if (window._activeSpeechRecognition) {
         window._activeSpeechRecognition.stop();
@@ -402,57 +460,9 @@ const Chatbot = () => {
       return;
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Speech recognition is not supported in your browser. Please use Chrome or Edge.");
-      return;
-    }
-
-    try {
-      setIsRecording(true);
-      setPendingTranscription("");
-
-      const recognition = new SpeechRecognition();
-      recognition.lang = "en-IN"; // English (India), also picks up Hindi
-      recognition.interimResults = false;
-      recognition.continuous = false; // Auto-stops after user pauses
-      recognition.maxAlternatives = 1;
-      
-      window._activeSpeechRecognition = recognition;
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        console.log("Speech recognized:", transcript);
-        setPendingTranscription(transcript);
-        setIsRecording(false);
-        window._activeSpeechRecognition = null;
-      };
-
-      recognition.onerror = (event) => {
-        console.error("Speech recognition error:", event.error);
-        setIsRecording(false);
-        window._activeSpeechRecognition = null;
-        if (event.error === "no-speech") {
-          alert("No speech was detected. Please try again.");
-        } else if (event.error === "not-allowed") {
-          alert("Microphone access was denied. Please allow microphone permissions.");
-        } else if (event.error !== "aborted") {
-          alert("Speech recognition failed: " + event.error);
-        }
-      };
-
-      recognition.onend = () => {
-        setIsRecording(false);
-        window._activeSpeechRecognition = null;
-      };
-
-      recognition.start();
-      console.log("Speech recognition started");
-    } catch (error) {
-      console.error("Speech recognition error:", error);
-      setIsRecording(false);
-      alert("Failed to start speech recognition. Please check permissions.");
-    }
+    setIsRecording(true);
+    setPendingTranscription("");
+    startSpeechRecognition(0);
   };
 
   const handleTextToSpeech = async (text, messageId) => {
