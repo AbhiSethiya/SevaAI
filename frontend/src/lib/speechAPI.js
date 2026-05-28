@@ -85,7 +85,7 @@ export class SpeechAPI {
           }
           const averageVolume = sum / bufferLength;
 
-          if (averageVolume > 5) {
+          if (averageVolume > 15) {
              silenceStartTime = Date.now();
           } else {
              if (Date.now() - silenceStartTime > SILENCE_THRESHOLD_MS) {

@@ -90,7 +90,7 @@ router.post("/speech-to-text", upload.single("audio"), async (req, res) => {
       {
         inlineData: {
           data: base64Audio,
-          mimeType: req.file.mimetype,
+          mimeType: req.file.mimetype.split(';')[0],
         },
       },
       "Please transcribe this audio file to text. Only return the transcribed text, nothing else.",
