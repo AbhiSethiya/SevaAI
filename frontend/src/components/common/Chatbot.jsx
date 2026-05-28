@@ -398,7 +398,7 @@ const Chatbot = () => {
       const audioBlob = await stopRecording();
 
       const formData = new FormData();
-      formData.append("audio", audioBlob, "recording.wav");
+      formData.append("audio", audioBlob, "recording.webm");
 
       const response = await fetch("/api/chat/speech-to-text", {
         method: "POST",
