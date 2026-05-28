@@ -391,162 +391,54 @@ const Chatbot = () => {
     }
   };
 
-  // Fallback: record audio and send to Gemini backend for transcription
-  const fallbackGeminiTranscription = async () => {
+  const stopAndProcessRecording = async () => {
     try {
-      setIsRecording(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      window._audioChunks = [];
+      setIsRecording(false);
+      setIsTyping(true); // Show typing while transcribing
+      const audioBlob = await stopRecording();
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) window._audioChunks.push(event.data);
-      };
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.webm");
 
-      // Use timeslice to collect chunks periodically
-      mediaRecorder.start(250);
-      window._activeMediaRecorder = mediaRecorder;
-      window._activeStream = stream;
+      const response = await fetch("/api/chat/speech-to-text", {
+        method: "POST",
+        body: formData,
+      });
 
-      // Auto-stop after 10 seconds max
-      window._recordingTimeout = setTimeout(() => {
-        if (mediaRecorder.state === "recording") {
-          stopGeminiRecording();
-        }
-      }, 10000);
+      if (!response.ok) {
+        throw new Error("Failed to transcribe audio");
+      }
+
+      const data = await response.json();
+      setPendingTranscription(data.text);
+      setIsTyping(false);
     } catch (error) {
-      console.error("Microphone access error:", error);
-      setIsRecording(false);
-      alert("Failed to access microphone. Please check permissions.");
+      console.error("Speech to text error:", error);
+      setIsTyping(false);
+      alert("Failed to convert speech to text. Please try again.");
     }
-  };
-
-  const stopGeminiRecording = async () => {
-    clearTimeout(window._recordingTimeout);
-    const mediaRecorder = window._activeMediaRecorder;
-    const stream = window._activeStream;
-
-    if (!mediaRecorder || mediaRecorder.state === "inactive") {
-      setIsRecording(false);
-      return;
-    }
-
-    setIsRecording(false);
-    setIsTyping(true);
-
-    mediaRecorder.onstop = async () => {
-      stream.getTracks().forEach((track) => track.stop());
-      window._activeMediaRecorder = null;
-      window._activeStream = null;
-
-      const mimeType = mediaRecorder.mimeType || "audio/webm";
-      const finalBlob = new Blob(window._audioChunks || [], { type: mimeType });
-      console.log("Recorded audio blob:", finalBlob.size, "bytes, type:", mimeType);
-
-      if (finalBlob.size < 100) {
-        setIsTyping(false);
-        alert("Recording was too short. Please try again and speak clearly.");
-        return;
-      }
-
-      try {
-        const formData = new FormData();
-        formData.append("audio", finalBlob, "recording.webm");
-
-        const response = await fetch("/api/chat/speech-to-text", {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        });
-
-        if (!response.ok) throw new Error("Transcription failed");
-
-        const data = await response.json();
-        if (data.text && data.text.trim()) {
-          setPendingTranscription(data.text.trim());
-        } else {
-          alert("Could not recognize any speech. Please try again.");
-        }
-      } catch (error) {
-        console.error("Gemini transcription error:", error);
-        alert("Speech recognition failed. Please try again.");
-      } finally {
-        setIsTyping(false);
-      }
-    };
-
-    mediaRecorder.stop();
   };
 
   const handleSpeechToText = async () => {
     if (isRecording) {
-      // Manual stop
-      if (window._activeSpeechRecognition) {
-        window._activeSpeechRecognition.stop();
-        window._activeSpeechRecognition = null;
-        setIsRecording(false);
-      } else if (window._activeMediaRecorder) {
-        stopGeminiRecording();
-      } else {
-        setIsRecording(false);
-      }
-      return;
-    }
-
-    setIsRecording(true);
-    setPendingTranscription("");
-
-    // Try browser's built-in SpeechRecognition first
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.lang = "en-IN";
-      recognition.interimResults = false;
-      recognition.continuous = false;
-      recognition.maxAlternatives = 1;
-
-      window._activeSpeechRecognition = recognition;
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        console.log("Browser speech recognized:", transcript);
-        setPendingTranscription(transcript);
-        setIsRecording(false);
-        window._activeSpeechRecognition = null;
-      };
-
-      recognition.onerror = (event) => {
-        console.warn("Browser speech API failed:", event.error);
-        window._activeSpeechRecognition = null;
-
-        if (event.error === "network" || event.error === "service-not-allowed") {
-          // Brave or blocked — fall back to Gemini
-          console.log("Falling back to Gemini backend for transcription...");
-          fallbackGeminiTranscription();
-        } else {
-          setIsRecording(false);
-          if (event.error === "no-speech") {
-            alert("No speech was detected. Please try again.");
-          } else if (event.error === "not-allowed") {
-            alert("Microphone access was denied. Please allow microphone permissions.");
-          } else if (event.error !== "aborted") {
-            alert("Speech recognition failed: " + event.error);
-          }
-        }
-      };
-
-      recognition.onend = () => {
-        if (!window._activeSpeechRecognition && !window._activeMediaRecorder) {
-          setIsRecording(false);
-        }
-      };
-
-      recognition.start();
-      console.log("Trying browser speech recognition...");
+      stopAndProcessRecording();
     } else {
-      // No browser API at all — go straight to Gemini
-      console.log("No browser speech API, using Gemini backend...");
-      fallbackGeminiTranscription();
+      try {
+        setIsRecording(true);
+        setPendingTranscription("");
+        
+        let hasTriggeredAutoStop = false;
+        await startRecording(() => {
+          if (!hasTriggeredAutoStop) {
+             hasTriggeredAutoStop = true;
+             stopAndProcessRecording();
+          }
+        });
+      } catch (error) {
+        console.error("Recording error:", error);
+        setIsRecording(false);
+        alert("Failed to access microphone. Please check permissions.");
+      }
     }
   };
 
