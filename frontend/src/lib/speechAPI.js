@@ -4,6 +4,10 @@ export class SpeechAPI {
   mediaRecorder = null;
   audioChunks = [];
   voicesLoaded = false;
+  audioContext = null;
+  analyser = null;
+  microphone = null;
+  isDetectingSilence = false;
 
   static getInstance() {
     if (!SpeechAPI.instance) {
@@ -50,12 +54,51 @@ export class SpeechAPI {
   }
 
   // Start recording audio for speech-to-text
-  async startRecording() {
+  async startRecording(onSilenceDetected = null) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       this.audioChunks = [];
 
       this.mediaRecorder = new MediaRecorder(stream);
+
+      if (onSilenceDetected) {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.analyser = this.audioContext.createAnalyser();
+        this.microphone = this.audioContext.createMediaStreamSource(stream);
+        this.microphone.connect(this.analyser);
+        
+        this.analyser.fftSize = 512;
+        const bufferLength = this.analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        this.isDetectingSilence = true;
+        let silenceStartTime = Date.now();
+        const SILENCE_THRESHOLD_MS = 2000;
+
+        const checkSilence = () => {
+          if (!this.isDetectingSilence) return;
+
+          this.analyser.getByteFrequencyData(dataArray);
+          let sum = 0;
+          for(let i = 0; i < bufferLength; i++) {
+             sum += dataArray[i];
+          }
+          const averageVolume = sum / bufferLength;
+
+          if (averageVolume > 5) {
+             silenceStartTime = Date.now();
+          } else {
+             if (Date.now() - silenceStartTime > SILENCE_THRESHOLD_MS) {
+                console.log("Silence detected, auto-stopping recording...");
+                this.isDetectingSilence = false;
+                onSilenceDetected();
+                return;
+             }
+          }
+          requestAnimationFrame(checkSilence);
+        };
+        checkSilence();
+      }
 
       this.mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -78,6 +121,12 @@ export class SpeechAPI {
         return;
       }
 
+      this.isDetectingSilence = false;
+      if (this.audioContext && this.audioContext.state !== 'closed') {
+         this.audioContext.close().catch(console.error);
+         this.audioContext = null;
+      }
+
       this.mediaRecorder.onstop = () => {
         const audioBlob = new Blob(this.audioChunks, { type: "audio/wav" });
         resolve(audioBlob);
@@ -85,6 +134,7 @@ export class SpeechAPI {
 
       this.mediaRecorder.stop();
       this.mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+      this.mediaRecorder = null;
     });
   }
 
@@ -376,7 +426,7 @@ export class SpeechAPI {
 // Export individual functions for easier use
 const speechAPI = SpeechAPI.getInstance();
 
-export const startRecording = () => speechAPI.startRecording();
+export const startRecording = (onSilence) => speechAPI.startRecording(onSilence);
 export const stopRecording = () => speechAPI.stopRecording();
 export const textToSpeech = (text, language) =>
   speechAPI.textToSpeech(text, language);

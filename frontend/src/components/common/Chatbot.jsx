@@ -36,6 +36,7 @@ const Chatbot = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [pendingTranscription, setPendingTranscription] = useState("");
   const [speakingMessageId, setSpeakingMessageId] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -153,8 +154,9 @@ const Chatbot = () => {
     );
   };
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+  const handleSendMessage = async (overrideText = null) => {
+    const textToSend = typeof overrideText === 'string' ? overrideText : inputMessage;
+    if (!textToSend.trim()) return;
 
     // Check if user is authenticated
     if (!user) {
@@ -164,15 +166,17 @@ const Chatbot = () => {
 
     const userMessage = {
       id: Date.now(),
-      text: inputMessage,
+      text: textToSend,
       sender: "user",
       timestamp: new Date(),
       location: userLocation, // Include location if available
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    const currentInput = inputMessage;
-    setInputMessage("");
+    const currentInput = textToSend;
+    if (typeof overrideText !== 'string') {
+        setInputMessage("");
+    }
     setIsTyping(true);
 
     try {
@@ -387,36 +391,49 @@ const Chatbot = () => {
     }
   };
 
+  const stopAndProcessRecording = async () => {
+    try {
+      setIsRecording(false);
+      setIsTyping(true); // Show typing while transcribing
+      const audioBlob = await stopRecording();
+
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.wav");
+
+      const response = await fetch("/api/chat/speech-to-text", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to transcribe audio");
+      }
+
+      const data = await response.json();
+      setPendingTranscription(data.text);
+      setIsTyping(false);
+    } catch (error) {
+      console.error("Speech to text error:", error);
+      setIsTyping(false);
+      alert("Failed to convert speech to text. Please try again.");
+    }
+  };
+
   const handleSpeechToText = async () => {
     if (isRecording) {
-      try {
-        setIsRecording(false);
-        const audioBlob = await stopRecording();
-
-        const formData = new FormData();
-        formData.append("audio", audioBlob, "recording.wav");
-
-        const response = await fetch("/api/chat/speech-to-text", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to transcribe audio");
-        }
-
-        const data = await response.json();
-        setInputMessage(data.text);
-        inputRef.current?.focus();
-      } catch (error) {
-        console.error("Speech to text error:", error);
-        setIsTyping(false);
-        alert("Failed to convert speech to text. Please try again.");
-      }
+      stopAndProcessRecording();
     } else {
       try {
         setIsRecording(true);
-        await startRecording();
+        setPendingTranscription("");
+        
+        let hasTriggeredAutoStop = false;
+        await startRecording(() => {
+          if (!hasTriggeredAutoStop) {
+             hasTriggeredAutoStop = true;
+             stopAndProcessRecording();
+          }
+        });
       } catch (error) {
         console.error("Recording error:", error);
         setIsRecording(false);
@@ -705,8 +722,50 @@ const Chatbot = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Area */}
-          <div className="border-t border-gray-200 p-4">
+            {/* Pending Transcription Confirmation */}
+            {pendingTranscription && (
+              <div className="border-t border-gray-200 p-3 bg-blue-50 flex flex-col space-y-2">
+                <p className="text-sm text-gray-700">
+                  <strong>Did you mean:</strong> "{pendingTranscription}"
+                </p>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => {
+                      const text = pendingTranscription;
+                      setPendingTranscription("");
+                      setTimeout(() => {
+                          handleSendMessage(text);
+                      }, 0);
+                    }}
+                    className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1.5 rounded shadow flex-1 transition-colors"
+                  >
+                    Yes, Send
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPendingTranscription("");
+                      setTimeout(() => {
+                          handleSpeechToText();
+                      }, 0);
+                    }}
+                    className="bg-gray-500 hover:bg-gray-600 text-white text-xs px-3 py-1.5 rounded shadow flex-1 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPendingTranscription("");
+                    }}
+                    className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded shadow flex-1 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Input Area */}
+            <div className="border-t border-gray-200 p-4">
             <div className="flex space-x-2">
               <button
                 onClick={handleSpeechToText}
