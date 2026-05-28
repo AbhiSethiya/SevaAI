@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const Complaint = require("./models/Complaint");
 const generateTicketId = require("./utils/generateTicketId");
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://nothing:nothing@cluster0.spmi8gv.mongodb.net/?appName=Cluster0"; // Add your remote URI if needed here
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/sevaai"; // Add your local fallback URI here
 
 // Indore base coordinates
 const BASE_LAT = 22.7196;
