@@ -22,7 +22,7 @@ const processRawComplaint = async (req, res) => {
 
     const ai = await analyze(rawText);
     if (!ai) return res.status(500).json({ message: "AI analysis failed" });
-    if (ai.error) return res.status(500).json({ message: `AI error: ${ai.error}` });
+    if (ai.error) return res.status(500).json({ message: `AI error: ${ai.message || ai.error}` });
 
     // Status query
     if (ai.type === "statusQuery") {
