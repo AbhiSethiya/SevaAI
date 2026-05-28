@@ -136,10 +136,29 @@ export class SpeechAPI {
         return;
       }
 
+      let resolved = false;
+
+      // Fallback timeout in case onstop never fires (or crashes)
+      const forceResolveTimeout = setTimeout(() => {
+        if (!resolved) {
+          console.warn("MediaRecorder onstop timeout - forcing resolution");
+          resolved = true;
+          const mimeType = this.mediaRecorder ? this.mediaRecorder.mimeType : 'audio/webm';
+          const audioBlob = new Blob(this.audioChunks, { type: mimeType });
+          this.mediaRecorder = null;
+          resolve(audioBlob);
+        }
+      }, 1000);
+
       this.mediaRecorder.onstop = () => {
-        const mimeType = this.mediaRecorder.mimeType || 'audio/webm';
-        const audioBlob = new Blob(this.audioChunks, { type: mimeType });
-        resolve(audioBlob);
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(forceResolveTimeout);
+          const mimeType = this.mediaRecorder ? this.mediaRecorder.mimeType : 'audio/webm';
+          const audioBlob = new Blob(this.audioChunks, { type: mimeType });
+          this.mediaRecorder = null;
+          resolve(audioBlob);
+        }
       };
 
       try {
@@ -148,12 +167,14 @@ export class SpeechAPI {
         this.mediaRecorder.stream.getTracks().forEach((track) => track.stop());
       } catch (error) {
         console.error("Error stopping media recorder:", error);
-        // Force resolve with whatever we have so it doesn't hang forever
-        const mimeType = this.mediaRecorder.mimeType || 'audio/webm';
-        const audioBlob = new Blob(this.audioChunks, { type: mimeType });
-        resolve(audioBlob);
-      } finally {
-        this.mediaRecorder = null;
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(forceResolveTimeout);
+          const mimeType = this.mediaRecorder ? this.mediaRecorder.mimeType : 'audio/webm';
+          const audioBlob = new Blob(this.audioChunks, { type: mimeType });
+          this.mediaRecorder = null;
+          resolve(audioBlob);
+        }
       }
     });
   }
