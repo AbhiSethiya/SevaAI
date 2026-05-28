@@ -18,6 +18,7 @@ var usersRouter = require("./routes/users");
 const complaintRoutes = require("./routes/complaintRoutes");
 
 var app = express();
+app.set("trust proxy", 1);
 
 connectDB();
 
