@@ -80,7 +80,7 @@ router.post("/speech-to-text", upload.single("audio"), async (req, res) => {
     }
 
     console.log("Processing audio with Gemini...");
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
     // Convert audio buffer to base64
     const base64Audio = req.file.buffer.toString("base64");
@@ -137,7 +137,7 @@ async function generateChatResponse(message, conversationHistory = []) {
   // Use Gemini for general conversation if available
   if (genAI) {
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
       const context =
         conversationHistory.length > 0
