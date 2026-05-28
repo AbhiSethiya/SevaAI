@@ -406,7 +406,8 @@ const Chatbot = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to transcribe audio");
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.details || errData.error || "Failed to transcribe audio");
       }
 
       const data = await response.json();
@@ -421,7 +422,7 @@ const Chatbot = () => {
     } catch (error) {
       console.error("Speech to text error:", error);
       setIsTyping(false);
-      alert("Failed to convert speech to text. Please try again.");
+      alert(`Speech recognition failed: ${error.message}`);
     }
   };
 
