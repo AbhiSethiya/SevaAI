@@ -84,19 +84,26 @@ router.post("/speech-to-text", upload.single("audio"), async (req, res) => {
 
     // Convert audio buffer to base64
     const base64Audio = req.file.buffer.toString("base64");
-    console.log("Audio converted to base64, length:", base64Audio.length);
+    const cleanMimeType = req.file.mimetype.split(";")[0].trim();
+    console.log("Audio base64 length:", base64Audio.length, "MIME:", cleanMimeType);
 
-    const result = await model.generateContent([
+    // Add a timeout so the request doesn't hang forever
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Transcription timed out")), 30000)
+    );
+
+    const transcribePromise = model.generateContent([
       {
         inlineData: {
           data: base64Audio,
-          mimeType: req.file.mimetype.split(';')[0],
+          mimeType: cleanMimeType,
         },
       },
-      "Please transcribe this audio file to text. Only return the transcribed text, nothing else.",
+      "Transcribe this audio to text. Return ONLY the exact spoken words, nothing else.",
     ]);
 
-    const transcription = result.response.text();
+    const result = await Promise.race([transcribePromise, timeoutPromise]);
+    const transcription = result.response.text().trim();
     console.log("Transcription successful:", transcription);
 
     res.json({ text: transcription });
