@@ -49,6 +49,9 @@ router.post("/message", async (req, res) => {
   }
 });
 
+const axios = require('axios');
+const FormData = require('form-data');
+
 // Speech-to-text endpoint
 router.post("/speech-to-text", upload.single("audio"), async (req, res) => {
   try {
@@ -68,49 +71,34 @@ router.post("/speech-to-text", upload.single("audio"), async (req, res) => {
 
     console.log("Processing audio with Groq Whisper API...");
     
-    // Create Blob from buffer for fetch FormData
     const cleanMimeType = req.file.mimetype.split(';')[0].trim();
-    const audioBlob = new Blob([req.file.buffer], { type: cleanMimeType });
-    
-    // Node 18+ has global FormData
-    const formData = new FormData();
-    
-    // Groq requires a filename with an extension they recognize (.webm, .wav, .mp3, etc)
     const extension = cleanMimeType.includes('webm') ? 'webm' : 'wav';
-    formData.append('file', audioBlob, `audio.${extension}`);
+    
+    // Use form-data package for guaranteed Node compatibility
+    const formData = new FormData();
+    formData.append('file', req.file.buffer, {
+      filename: `audio.${extension}`,
+      contentType: cleanMimeType,
+    });
     formData.append('model', 'whisper-large-v3-turbo'); 
-    formData.append('language', 'en'); // Force English or auto-detect by omitting
+    formData.append('language', 'en');
 
-    // Add a timeout so the request doesn't hang forever
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout for Groq
-
-    const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
-      method: 'POST',
+    const response = await axios.post('https://api.groq.com/openai/v1/audio/transcriptions', formData, {
       headers: {
+        ...formData.getHeaders(),
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
-      body: formData,
-      signal: controller.signal
+      timeout: 15000 // 15 seconds timeout
     });
-    
-    clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Groq API error:", response.status, errorText);
-      throw new Error(`Groq API returned ${response.status}`);
-    }
+    console.log("Transcription successful:", response.data.text);
+    res.json({ text: response.data.text });
 
-    const data = await response.json();
-    console.log("Transcription successful:", data.text);
-
-    res.json({ text: data.text });
   } catch (error) {
-    console.error("Speech-to-text error:", error.message);
+    console.error("Speech-to-text error:", error.response?.data || error.message);
     res.status(500).json({
       error: "Failed to transcribe audio",
-      details: error.name === 'AbortError' ? 'Request timed out' : error.message,
+      details: error.response?.data?.error?.message || error.message,
     });
   }
 });
