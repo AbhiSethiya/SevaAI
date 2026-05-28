@@ -4,7 +4,7 @@
   "description": "SevaAI Deployment Root",
   "scripts": {
     "install-all": "npm install --prefix backend && npm install --prefix frontend",
-    "build": "npm install --prefix frontend && npm run build --prefix frontend && mkdir -p backend/public && cp -r frontend/dist/* backend/public/",
+    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend && mkdir -p backend/public && cp -r frontend/dist/* backend/public/",
     "start": "npm start --prefix backend"
   }
 }
