@@ -203,9 +203,13 @@ const Chatbot = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.text();
+        let errorData = await response.text();
+        try {
+           const parsed = JSON.parse(errorData);
+           if (parsed.message) errorData = parsed.message;
+        } catch(e) {}
         console.error("Response error:", errorData);
-        throw new Error("Failed to get response");
+        throw new Error(errorData || "Failed to get response");
       }
 
       const data = await response.json();
@@ -381,7 +385,7 @@ const Chatbot = () => {
       console.error("Chat error:", error);
       const errorMessage = {
         id: Date.now() + 1,
-        text: "Sorry, I'm having trouble responding right now. Please try again later.",
+        text: `Error: ${error.message || "I'm having trouble responding right now."}`,
         sender: "bot",
         timestamp: new Date(),
       };
