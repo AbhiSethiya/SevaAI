@@ -410,7 +410,13 @@ const Chatbot = () => {
       }
 
       const data = await response.json();
-      setPendingTranscription(data.text);
+      const transcribedText = data.text ? data.text.trim() : "";
+      
+      if (transcribedText) {
+        setPendingTranscription(transcribedText);
+      } else {
+        alert("No speech was recognized. Please try again and speak a bit closer to the microphone.");
+      }
       setIsTyping(false);
     } catch (error) {
       console.error("Speech to text error:", error);
