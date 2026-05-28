@@ -400,10 +400,16 @@ const Chatbot = () => {
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.webm");
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
       const response = await fetch("/api/chat/speech-to-text", {
         method: "POST",
         body: formData,
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));

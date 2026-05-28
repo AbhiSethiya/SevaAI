@@ -127,15 +127,34 @@ export class SpeechAPI {
          this.audioContext = null;
       }
 
+      if (this.mediaRecorder.state === "inactive") {
+        // If it's already inactive, just resolve with whatever chunks we have
+        const mimeType = this.mediaRecorder.mimeType || 'audio/webm';
+        const audioBlob = new Blob(this.audioChunks, { type: mimeType });
+        this.mediaRecorder = null;
+        resolve(audioBlob);
+        return;
+      }
+
       this.mediaRecorder.onstop = () => {
         const mimeType = this.mediaRecorder.mimeType || 'audio/webm';
         const audioBlob = new Blob(this.audioChunks, { type: mimeType });
         resolve(audioBlob);
       };
 
-      this.mediaRecorder.stop();
-      this.mediaRecorder.stream.getTracks().forEach((track) => track.stop());
-      this.mediaRecorder = null;
+      try {
+        this.mediaRecorder.requestData(); // Get any remaining chunks
+        this.mediaRecorder.stop();
+        this.mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+      } catch (error) {
+        console.error("Error stopping media recorder:", error);
+        // Force resolve with whatever we have so it doesn't hang forever
+        const mimeType = this.mediaRecorder.mimeType || 'audio/webm';
+        const audioBlob = new Blob(this.audioChunks, { type: mimeType });
+        resolve(audioBlob);
+      } finally {
+        this.mediaRecorder = null;
+      }
     });
   }
 
