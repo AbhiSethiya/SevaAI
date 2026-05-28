@@ -1,15 +1,15 @@
-// services/geminiService.js
+// services/aiService.js (replaces geminiService)
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const genAI = process.env.GEMINI_API_KEY
-  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-  : null;
+const Groq = require("groq-sdk");
+
+const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
+const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
 
 // Analyze raw text and return structured complaint or FAQ info
 async function analyze(rawText) {
-  if (!genAI) return { error: "Gemini API not configured" };
+  if (!genAI && !groq) return { error: "No AI API configured (Need Gemini or Groq)" };
 
-
-    const prompt = `
+  const prompt = `
 You are an intelligent municipal assistant. Analyze the following user input and respond ONLY in valid JSON.
 
 User Input: """${rawText}"""
@@ -81,40 +81,48 @@ Output:
 Now analyze the user input and return JSON only.
 `;
 
-  try {
-    let response;
+  // Prefer Groq since user explicitly requested it and it supports JSON mode natively
+  if (groq) {
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      response = await model.generateContent(prompt);
-    } catch(err) {
-      if (err.message && err.message.includes("404")) {
-         console.warn("gemini-1.5-flash not found, falling back to gemini-pro");
-         const fallbackModel = genAI.getGenerativeModel({ model: "gemini-pro" });
-         response = await fallbackModel.generateContent(prompt);
-      } else {
-         throw err;
-      }
-    }
-    
-    let text = response.response.text().trim();
-
-    // Remove triple backticks and language hints
-    text = text
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
-
-    try {
-      const json = JSON.parse(text);
-      return json;
+      const completion = await groq.chat.completions.create({
+        messages: [{ role: "user", content: prompt }],
+        model: "llama3-70b-8192",
+        response_format: { type: "json_object" }
+      });
+      return JSON.parse(completion.choices[0].message.content);
     } catch (err) {
-      console.error("Gemini returned invalid JSON:", text);
-      return { error: "AI response invalid" };
+      console.error("Groq analyze error, falling back to Gemini:", err);
+      // Fall through to Gemini if Groq fails
     }
-  } catch (err) {
-    console.error("Gemini analyze error:", err);
-    return { error: true, message: err.message };
   }
+
+  // Fallback to Gemini
+  if (genAI) {
+    try {
+      let response;
+      try {
+        const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+        response = await model.generateContent(prompt);
+      } catch(err) {
+        if (err.message && err.message.includes("404")) {
+           console.warn("gemini-3.5-flash not found, falling back to gemini-pro");
+           const fallbackModel = genAI.getGenerativeModel({ model: "gemini-pro" });
+           response = await fallbackModel.generateContent(prompt);
+        } else {
+           throw err;
+        }
+      }
+      
+      let text = response.response.text().trim();
+      text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+      return JSON.parse(text);
+    } catch (err) {
+      console.error("Gemini analyze error:", err);
+      return { error: true, message: err.message };
+    }
+  }
+
+  return { error: true, message: "No valid API keys could process the request" };
 }
 
 module.exports = { analyze };
