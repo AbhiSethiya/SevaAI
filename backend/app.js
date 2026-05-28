@@ -32,21 +32,26 @@ app.use(
 if (process.env.NODE_ENV === "development") app.use(logger("dev"));
 
 // Sessions
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "hackathon_secret",
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
-    name: "connect.sid", // Explicitly set the session name
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-      httpOnly: true, // Prevent XSS attacks
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Allow cross-site requests in production
-    },
-  })
-);
+const sessionOptions = {
+  secret: process.env.SESSION_SECRET || "hackathon_secret",
+  resave: false,
+  saveUninitialized: false,
+  name: "connect.sid", // Explicitly set the session name
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24, // 1 day
+    secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+    httpOnly: true, // Prevent XSS attacks
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Allow cross-site requests in production
+  },
+};
+
+if (process.env.MONGO_URI) {
+  sessionOptions.store = MongoStore.create({ mongoUrl: process.env.MONGO_URI });
+} else {
+  console.warn("⚠️ WARNING: MONGO_URI is not set. Falling back to default in-memory session store.");
+}
+
+app.use(session(sessionOptions));
 
 require("./utils/eventPriorityUpdater");
 
