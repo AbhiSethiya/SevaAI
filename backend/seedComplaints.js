@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const Complaint = require("./models/Complaint");
 const generateTicketId = require("./utils/generateTicketId");
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/sevaai"; // Add your local fallback URI here
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/sevaai"; // Use environment variable or local database
 
 // Indore base coordinates
 const BASE_LAT = 22.7196;
@@ -115,7 +115,8 @@ async function seedDatabase() {
     // Some random user IDs (you can replace these with actual user ObjectIds if you want)
     const dummyUserId = new mongoose.Types.ObjectId();
 
-    const complaintsToInsert = dummyComplaints.map(data => {
+    const complaintsToInsert = Array.from({ length: 100 }).map(() => {
+      const data = dummyComplaints[Math.floor(Math.random() * dummyComplaints.length)];
       // Create random dates from the past 30 days
       const daysAgo = Math.floor(Math.random() * 30);
       const createdAt = new Date();
