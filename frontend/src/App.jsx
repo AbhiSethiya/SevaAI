@@ -1,12 +1,16 @@
+import { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  useLocation,
+  useNavigate,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ChatbotProvider } from "./contexts/ChatbotContext";
 import AuthModal from "./components/AuthModal";
+import ServerSettingsModal from "./components/ServerSettingsModal";
 import Layout from "./layouts/Layout";
 import HomePage from "./pages/HomePage";
 import ComplaintRegistration from "./pages/ComplaintRegistration";
@@ -15,6 +19,7 @@ import FAQ from "./pages/FAQ";
 import Heatmaps from "./pages/Heatmaps";
 import Dashboard from "./pages/Dashboard";
 import WorkerDashboard from "./pages/WorkerDashboard";
+import { initNativeShell } from "./lib/native";
 
 // Role-based route protection component
 const RoleProtectedRoute = ({ children, allowedRoles = [] }) => {
@@ -72,7 +77,41 @@ const HomePageWrapper = () => {
 
 // App Routes Component (needs to be inside AuthProvider to use useAuth)
 const AppRoutes = () => {
-  const { showAuthModal, closeAuthModal } = useAuth();
+  const {
+    showAuthModal,
+    closeAuthModal,
+    showServerSettings,
+    closeServerSettings,
+    refreshConnection,
+  } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const cleanup = initNativeShell((canGoBack, exitApp) => {
+      if (showServerSettings) {
+        closeServerSettings();
+        return;
+      }
+      if (showAuthModal) {
+        closeAuthModal();
+        return;
+      }
+      if (location.pathname !== "/" && canGoBack) {
+        navigate(-1);
+        return;
+      }
+      exitApp();
+    });
+    return cleanup;
+  }, [
+    showAuthModal,
+    showServerSettings,
+    closeAuthModal,
+    closeServerSettings,
+    location.pathname,
+    navigate,
+  ]);
 
   return (
     <>
@@ -140,21 +179,28 @@ const AppRoutes = () => {
 
       {/* Auth Modal */}
       <AuthModal isOpen={showAuthModal} onClose={closeAuthModal} />
+
+      {/* Backend Server Settings Modal */}
+      <ServerSettingsModal
+        isOpen={showServerSettings}
+        onClose={closeServerSettings}
+        onSaved={() => refreshConnection()}
+      />
     </>
   );
 };
 
 function App() {
   return (
-    <AuthProvider>
-      <ChatbotProvider>
-        <Router>
+    <Router>
+      <AuthProvider>
+        <ChatbotProvider>
           <div className="App">
             <AppRoutes />
           </div>
-        </Router>
-      </ChatbotProvider>
-    </AuthProvider>
+        </ChatbotProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 

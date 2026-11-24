@@ -1,21 +1,34 @@
 // API utility functions for making backend requests
+import { apiUrl, getAuthToken } from "./config";
 
-const API_BASE_URL = "/api";
+// Low-level fetch wrapper that resolves API base URL and attaches auth headers
+export const apiFetch = async (endpoint, options = {}) => {
+  const url = apiUrl(endpoint);
+  const token = getAuthToken();
+  const isFormData =
+    typeof FormData !== "undefined" && options.body instanceof FormData;
+
+  const headers = {
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {}),
+  };
+
+  if (isFormData) {
+    delete headers["Content-Type"];
+  }
+
+  return fetch(url, {
+    credentials: "include",
+    ...options,
+    headers,
+  });
+};
 
 // Generic API request function
 const apiRequest = async (endpoint, options = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const config = {
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
-  };
-
   try {
-    const response = await fetch(url, config);
+    const response = await apiFetch(endpoint, options);
     const data = await response.json();
 
     if (!response.ok) {

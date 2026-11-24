@@ -1,5 +1,24 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+const getJwtSecret = () =>
+  process.env.JWT_SECRET || process.env.SESSION_SECRET || "hackathon_secret";
+
+const buildUserPayload = (user) => ({
+  id: user._id.toString(),
+  _id: user._id.toString(),
+  username: user.username,
+  role: user.role,
+  fullName: user.fullName,
+  email: user.email,
+  phone: user.phone,
+  department: user.department,
+  workStatus: user.workStatus,
+});
+
+const signAuthToken = (userPayload) =>
+  jwt.sign(userPayload, getJwtSecret(), { expiresIn: "7d" });
 
 // Register User
 exports.registerUser = async (req, res) => {
@@ -100,20 +119,15 @@ exports.loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Create session
-    req.session.user = {
-      id: user._id,
-      username: user.username,
-      role: user.role,
-      fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      department: user.department,
-    };
+    // Create session & JWT token (for web cookies + Android Capacitor Bearer auth)
+    const userPayload = buildUserPayload(user);
+    req.session.user = userPayload;
+    const token = signAuthToken(userPayload);
 
     res.status(200).json({
       message: "Login successful",
-      user: req.session.user,
+      user: userPayload,
+      token,
     });
   } catch (err) {
     console.error(err);
@@ -145,14 +159,28 @@ exports.logoutUser = (req, res) => {
 };
 
 // Check authentication status
-exports.getMe = (req, res) => {
+exports.getMe = async (req, res) => {
   console.log("Auth check - Session exists:", !!req.session);
   console.log("Auth check - Session user:", req.session?.user);
   console.log("Auth check - Session ID:", req.sessionID);
 
   if (req.session && req.session.user) {
-    res.status(200).json({ user: req.session.user });
-  } else {
-    res.status(401).json({ message: "Not authenticated" });
+    return res.status(200).json({ user: req.session.user });
   }
+
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.slice(7).trim();
+    try {
+      const decoded = jwt.verify(token, getJwtSecret());
+      const dbUser = await User.findById(decoded.id || decoded._id).select("-password");
+      if (dbUser) {
+        return res.status(200).json({ user: buildUserPayload(dbUser) });
+      }
+    } catch (err) {
+      console.warn("Bearer token verification failed in getMe:", err.message);
+    }
+  }
+
+  return res.status(401).json({ message: "Not authenticated" });
 };

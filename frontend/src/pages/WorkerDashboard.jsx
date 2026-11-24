@@ -31,7 +31,7 @@ import L from "leaflet";
 import Card from "../components/common/Card";
 import Button from "../components/common/Button";
 import Textarea from "../components/common/Textarea";
-import { workerAPI } from "../lib/api";
+import { workerAPI, apiFetch } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 
 // Fix for default markers in react-leaflet
@@ -184,14 +184,10 @@ const WorkerPage = () => {
   // Update worker status
   const updateWorkerStatus = async (newStatus) => {
     try {
-      const response = await fetch(
-        `/api/workers/status/${user._id || user.id}`,
+      const response = await apiFetch(
+        `/workers/status/${user._id || user.id}`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
           body: JSON.stringify({ workStatus: newStatus }),
         }
       );
@@ -306,11 +302,10 @@ const WorkerPage = () => {
         formData.append("workerNotes", statusUpdate);
       }
 
-      const response = await fetch(
-        `/api/workers/complaint/${complaintId}/status`,
+      const response = await apiFetch(
+        `/workers/complaint/${complaintId}/status`,
         {
           method: "PUT",
-          credentials: "include",
           body: formData,
         }
       );
@@ -379,11 +374,10 @@ const WorkerPage = () => {
         formData.append("completionPhotos", photo);
       });
 
-      const response = await fetch(
-        `/api/workers/complaint/${complaintId}/status`,
+      const response = await apiFetch(
+        `/workers/complaint/${complaintId}/status`,
         {
           method: "PUT",
-          credentials: "include",
           body: formData,
         }
       );

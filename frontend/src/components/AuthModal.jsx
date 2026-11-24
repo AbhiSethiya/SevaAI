@@ -5,7 +5,7 @@ import Register from "./Register";
 
 const AuthModal = ({ isOpen, onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
-  const { user } = useAuth();
+  const { user, openServerSettings, serverOnline } = useAuth();
 
   // Close modal when user is authenticated
   useEffect(() => {
@@ -93,7 +93,29 @@ const AuthModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Auth Forms */}
-        <div className="pb-6">{isLogin ? <Login /> : <Register />}</div>
+        <div className="pb-4">{isLogin ? <Login /> : <Register />}</div>
+
+        {/* Server Settings Link */}
+        <div className="px-6 pb-5 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+          <span className="flex items-center gap-1.5">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                serverOnline ? "bg-green-500" : "bg-red-500"
+              }`}
+            />
+            {serverOnline ? "Server connected" : "Server unreachable"}
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              openServerSettings();
+            }}
+            className="text-blue-600 hover:underline font-medium"
+          >
+            Server Settings
+          </button>
+        </div>
       </div>
     </div>
   );

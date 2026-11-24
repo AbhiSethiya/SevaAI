@@ -23,6 +23,7 @@ import Button from "../components/common/Button";
 import { complaintAPI } from "../lib/api";
 import { startRecording, stopRecording } from "../lib/speechAPI";
 import { SpeechAPI } from "../lib/speechAPI";
+import { getCurrentCoordinates } from "../lib/native";
 
 // Step Components
 const StepIndicator = ({ steps, currentStep, goToStep }) => {
@@ -788,26 +789,19 @@ const ComplaintRegistration = () => {
   };
 
   // Location fetch
-  const fetchLocation = () => {
+  const fetchLocation = async () => {
     setLocationLoading(true);
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCoordinates({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-          setLocationLoading(false);
-        },
-        (error) => {
-          console.error("Error fetching location:", error);
-          setLocationLoading(false);
-          alert("Could not fetch location. Please check permissions.");
-        }
-      );
-    } else {
+    try {
+      const position = await getCurrentCoordinates();
+      setCoordinates({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      });
+    } catch (error) {
+      console.error("Error fetching location:", error);
+      alert(error.message || "Could not fetch location. Please check permissions.");
+    } finally {
       setLocationLoading(false);
-      alert("Geolocation is not supported by this browser.");
     }
   };
 

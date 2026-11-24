@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../lib/api";
+import {
+  setAuthToken,
+  clearAuthToken,
+  checkServerHealth,
+} from "../lib/config";
 
 const AuthContext = createContext();
 
@@ -14,66 +21,89 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showServerSettings, setShowServerSettings] = useState(false);
+  const [serverOnline, setServerOnline] = useState(true);
+  const navigate = useNavigate();
 
-  // Check if user is already logged in on app start
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  const checkAuthStatus = async () => {
+  const checkAuthStatus = useCallback(async () => {
     try {
       console.log("Checking authentication status...");
-      const response = await fetch("/api/auth/me", {
-        credentials: "include",
+
+      // First do a quick reachability check (with generous timeout for Render cold starts)
+      const health = await checkServerHealth();
+      setServerOnline(health.ok);
+      if (!health.ok) {
+        console.warn("Server unreachable:", health.error);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      const response = await apiFetch("/auth/me", {
+        method: "GET",
       });
 
+      setServerOnline(true);
       console.log("Auth check response status:", response.status);
 
       if (response.ok) {
         const userData = await response.json();
         console.log("User authenticated:", userData.user);
-        setUser(userData.user); // Make sure to access the user property
+        setUser(userData.user);
       } else {
-        // Clear any stale user data if not authenticated
+        if (response.status === 401) {
+          clearAuthToken();
+        }
         console.log("User not authenticated");
         setUser(null);
       }
     } catch (error) {
       console.error("Auth check failed:", error);
-      setUser(null); // Clear user on error
+      setServerOnline(false);
+      setUser(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Check if user is already logged in on app start and when server URL changes
+  useEffect(() => {
+    checkAuthStatus();
+    const handleServerChange = () => {
+      checkAuthStatus();
+    };
+    window.addEventListener("sevaai:server-url-changed", handleServerChange);
+    return () => {
+      window.removeEventListener("sevaai:server-url-changed", handleServerChange);
+    };
+  }, [checkAuthStatus]);
 
   const login = async (emailOrPhone, password) => {
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await apiFetch("/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
         body: JSON.stringify({ emailOrPhone, password }),
       });
 
+      setServerOnline(true);
       const data = await response.json();
 
       if (response.ok) {
+        if (data.token) {
+          setAuthToken(data.token);
+        }
         setUser(data.user);
-        setShowAuthModal(false); // Close auth modal on successful login
+        setShowAuthModal(false);
 
-        // Redirect based on user role
         setTimeout(() => {
           if (data.user.role === "admin") {
-            window.location.href = "/dashboard";
+            navigate("/dashboard", { replace: true });
           } else if (data.user.role === "worker") {
-            window.location.href = "/worker";
+            navigate("/worker", { replace: true });
           } else {
-            // For regular users, stay on current page or go to home
-            window.location.href = "/";
+            navigate("/", { replace: true });
           }
-        }, 100);
+        }, 50);
 
         return { success: true, user: data.user, message: data.message };
       } else {
@@ -81,22 +111,19 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Login error:", error);
+      setServerOnline(false);
       return {
         success: false,
-        error: "Network error occurred. Please check your connection.",
-        message: "Network error occurred. Please check your connection.",
+        error: "Cannot reach SevaAI server. Check Wi-Fi or Server Settings.",
+        message: "Cannot reach SevaAI server. Check Wi-Fi or Server Settings.",
       };
     }
   };
 
   const register = async (username, password, additionalData = {}) => {
     try {
-      const response = await fetch("/api/auth/register", {
+      const response = await apiFetch("/auth/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
         body: JSON.stringify({
           username,
           password,
@@ -104,10 +131,10 @@ export const AuthProvider = ({ children }) => {
         }),
       });
 
+      setServerOnline(true);
       const data = await response.json();
 
       if (response.ok) {
-        // After successful registration, we need to login using email
         const loginResult = await login(
           additionalData.email || username,
           password
@@ -118,19 +145,19 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Registration error:", error);
+      setServerOnline(false);
       return {
         success: false,
-        error: "Network error occurred. Please check your connection.",
-        message: "Network error occurred. Please check your connection.",
+        error: "Cannot reach SevaAI server. Check Wi-Fi or Server Settings.",
+        message: "Cannot reach SevaAI server. Check Wi-Fi or Server Settings.",
       };
     }
   };
 
   const logout = async () => {
     try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST", // Changed to POST to match backend route
-        credentials: "include",
+      const response = await apiFetch("/auth/logout", {
+        method: "POST",
       });
 
       if (response.ok) {
@@ -141,13 +168,11 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Always clear user state regardless of server response
+      clearAuthToken();
       setUser(null);
       setShowAuthModal(false);
 
-      // Clear any potential cached authentication data
       try {
-        // Clear all cookies by setting them to expire
         document.cookie.split(";").forEach(function (c) {
           document.cookie = c
             .replace(/^ +/, "")
@@ -160,15 +185,14 @@ export const AuthProvider = ({ children }) => {
         console.log("Error clearing cookies:", e);
       }
 
-      // Force reload to clear any cached state and ensure fresh start
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 100);
+      navigate("/", { replace: true });
     }
   };
 
   const openAuthModal = () => setShowAuthModal(true);
   const closeAuthModal = () => setShowAuthModal(false);
+  const openServerSettings = () => setShowServerSettings(true);
+  const closeServerSettings = () => setShowServerSettings(false);
 
   const value = {
     user,
@@ -179,6 +203,11 @@ export const AuthProvider = ({ children }) => {
     showAuthModal,
     openAuthModal,
     closeAuthModal,
+    serverOnline,
+    showServerSettings,
+    openServerSettings,
+    closeServerSettings,
+    refreshConnection: checkAuthStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

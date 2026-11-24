@@ -23,6 +23,10 @@ import {
   Settings,
   BarChart3,
   HelpCircle,
+  Server,
+  Home,
+  PlusCircle,
+  Map,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import Chatbot from "../components/common/Chatbot";
@@ -39,7 +43,8 @@ const Header = () => {
   const location = useLocation();
   const languageDropdownRef = useRef(null);
   const userMenuRef = useRef(null);
-  const { user, logout, openAuthModal } = useAuth();
+  const { user, logout, openAuthModal, serverOnline, openServerSettings } =
+    useAuth();
 
   const toggleHighContrast = () => {
     setIsHighContrast(!isHighContrast);
@@ -108,7 +113,24 @@ const Header = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Server Connection Status / Settings */}
+            <button
+              type="button"
+              onClick={openServerSettings}
+              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs border transition-colors ${
+                serverOnline
+                  ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                  : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100 animate-pulse"
+              }`}
+              title="Configure backend server URL"
+            >
+              <Server className="w-3 h-3" />
+              <span className="hidden sm:inline">
+                {serverOnline ? "Connected" : "Server Offline"}
+              </span>
+            </button>
+
             {/* Helpline */}
             <div className="flex items-center gap-1 text-blue-600">
               <Phone className="w-3 h-3" />
@@ -299,6 +321,34 @@ const Header = () => {
                         </p>
                       </div>
                     </div>
+                    {user?.role === "admin" && (
+                      <Link
+                        to="/dashboard"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
+                      >
+                        <BarChart3 className="h-4 w-4 mr-3 text-gray-400" />
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    {user?.role === "worker" && (
+                      <Link
+                        to="/worker"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
+                      >
+                        <Settings className="h-4 w-4 mr-3 text-gray-400" />
+                        Worker Dashboard
+                      </Link>
+                    )}
+                    <Link
+                      to="/my-complaints"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
+                    >
+                      <FileText className="h-4 w-4 mr-3 text-gray-400" />
+                      My Complaints
+                    </Link>
                     <button
                       onClick={() => {
                         handleLogout();
@@ -538,14 +588,85 @@ const Footer = () => {
   );
 };
 
+// Mobile Bottom Navigation Bar
+const MobileBottomNav = () => {
+  const location = useLocation();
+  const { user } = useAuth();
+
+  const personalRoute =
+    user?.role === "admin"
+      ? { name: "Admin", href: "/dashboard", icon: BarChart3 }
+      : user?.role === "worker"
+      ? { name: "Tasks", href: "/worker", icon: Settings }
+      : { name: "My Issues", href: "/my-complaints", icon: FileText };
+
+  const items = [
+    { name: "Home", href: "/", icon: Home },
+    { name: "Report", href: "/register-complaint", icon: PlusCircle },
+    { name: "Heatmap", href: "/heatmaps", icon: Map },
+    personalRoute,
+    { name: "FAQ", href: "/faq", icon: HelpCircle },
+  ];
+
+  return (
+    <nav
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-gray-200 shadow-lg"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      aria-label="Mobile navigation"
+    >
+      <div className="grid grid-cols-5 h-16">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={`flex flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors ${
+                isActive
+                  ? "text-blue-700"
+                  : "text-gray-500 hover:text-blue-600"
+              }`}
+            >
+              <Icon
+                className={`w-5 h-5 ${
+                  isActive ? "text-blue-700" : "text-gray-500"
+                }`}
+              />
+              <span className="truncate max-w-full px-1">{item.name}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+};
+
 // Main Layout Component
 const Layout = ({ children }) => {
+  const { serverOnline, openServerSettings } = useAuth();
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-16 md:pb-0">
       <Header />
+      {!serverOnline && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-amber-900 flex items-center justify-between gap-2">
+          <span>
+            Cannot reach SevaAI backend server. Check Wi-Fi or configure server URL.
+          </span>
+          <button
+            type="button"
+            onClick={openServerSettings}
+            className="px-2.5 py-1 bg-amber-600 text-white rounded font-medium whitespace-nowrap"
+          >
+            Server Settings
+          </button>
+        </div>
+      )}
       <main className="flex-1">{children}</main>
       <Footer />
       <Chatbot />
+      <MobileBottomNav />
     </div>
   );
 };

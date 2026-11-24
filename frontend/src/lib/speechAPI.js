@@ -1,5 +1,12 @@
 // Speech API utilities
 import toWav from 'audiobuffer-to-wav';
+import { apiFetch } from './api';
+import {
+  ensureNativeAudioPermission,
+  hasNativeTTS,
+  nativeSpeak,
+  nativeStopSpeak,
+} from './native';
 
 export class SpeechAPI {
   static instance = null;
@@ -58,6 +65,7 @@ export class SpeechAPI {
   // Start recording audio for speech-to-text
   async startRecording(onSilenceDetected = null) {
     try {
+      await ensureNativeAudioPermission();
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       this.audioChunks = [];
 
@@ -207,7 +215,7 @@ export class SpeechAPI {
       const formData = new FormData();
       formData.append("audio", audioBlob, "audio.wav");
 
-      const response = await fetch("/api/chat/speech-to-text", {
+      const response = await apiFetch("/chat/speech-to-text", {
         method: "POST",
         body: formData,
       });
@@ -235,8 +243,21 @@ export class SpeechAPI {
     }
   }
 
-  // Convert text to speech using browser's built-in API
+  // Convert text to speech using native Android TTS when available or browser API
   async textToSpeech(text, language = "auto") {
+    if (!("speechSynthesis" in window) || hasNativeTTS()) {
+      if (hasNativeTTS()) {
+        const hindiRegex = /[\u0900-\u097F]/;
+        const resolvedLang =
+          language === "auto"
+            ? hindiRegex.test(text)
+              ? "hi-IN"
+              : "en-US"
+            : language;
+        return nativeSpeak(text, resolvedLang);
+      }
+    }
+
     return new Promise((resolve, reject) => {
       if (!("speechSynthesis" in window)) {
         reject(new Error("Text-to-speech not supported"));
@@ -435,6 +456,7 @@ export class SpeechAPI {
 
   // Stop any ongoing speech
   stopSpeech() {
+    nativeStopSpeak();
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
@@ -495,6 +517,7 @@ export const startRecording = (onSilence) => speechAPI.startRecording(onSilence)
 export const stopRecording = () => speechAPI.stopRecording();
 export const textToSpeech = (text, language) =>
   speechAPI.textToSpeech(text, language);
+export const stopSpeech = () => speechAPI.stopSpeech();
 export const getAvailableVoices = () => speechAPI.getAvailableVoices();
 export const testAudio = () => speechAPI.testAudio();
 export const isHindiVoiceAvailable = () => speechAPI.isHindiVoiceAvailable();

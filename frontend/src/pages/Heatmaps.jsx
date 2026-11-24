@@ -16,6 +16,7 @@ import Card from "../components/common/Card";
 import Button from "../components/common/Button";
 import Select from "../components/common/Select";
 import HeatMap from "../components/HeatMap";
+import { apiFetch } from "../lib/api";
 
 const Heatmaps = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -115,7 +116,7 @@ const Heatmaps = () => {
       if (selectedTimeframe !== "all")
         params.append("timeframe", selectedTimeframe);
 
-      const response = await fetch(`/api/complaints/all?${params.toString()}`);
+      const response = await apiFetch(`/complaints/all?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch complaints data");

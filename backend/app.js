@@ -22,13 +22,46 @@ app.set("trust proxy", 1);
 
 connectDB();
 
+const allowedStaticOrigins = new Set([
+  "http://localhost:5000",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost",
+  "https://localhost",
+  "capacitor://localhost",
+  "ionic://localhost",
+]);
+
+if (process.env.CORS_ORIGINS) {
+  process.env.CORS_ORIGINS.split(",")
+    .map((o) => o.trim())
+    .filter(Boolean)
+    .forEach((o) => allowedStaticOrigins.add(o));
+}
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true; // Mobile WebView / native clients / curl
+  if (allowedStaticOrigins.has(origin)) return true;
+  // Allow localhost, emulator (10.0.2.2), and local Wi-Fi LAN origins for dev/mobile
+  return /^https?:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(
+    origin
+  );
+};
+
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5000", "http://localhost:5173"],
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   })
-); // React frontend
+); // React frontend & Capacitor Android app
 if (process.env.NODE_ENV === "development") app.use(logger("dev"));
 
 // Sessions
@@ -70,6 +103,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    app: "SevaAI",
+    timestamp: new Date().toISOString(),
+  });
+});
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);

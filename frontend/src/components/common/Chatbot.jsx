@@ -16,7 +16,10 @@ import {
   startRecording,
   stopRecording,
   textToSpeech,
+  stopSpeech,
 } from "../../lib/speechAPI";
+import { apiFetch } from "../../lib/api";
+import { getCurrentCoordinates } from "../../lib/native";
 import { useAuth } from "../../contexts/AuthContext";
 import { useChatbot } from "../../contexts/ChatbotContext";
 
@@ -87,71 +90,63 @@ const Chatbot = () => {
     }
   }, [isOpen]);
 
-  const getCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      console.warn("Geolocation is not supported by this browser.");
-      return;
-    }
-
+  const getCurrentLocation = async () => {
     setIsLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const location = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          timestamp: new Date().toISOString(),
-        };
-        setUserLocation(location);
-        setIsLoadingLocation(false);
-        console.log("Location obtained:", location);
-
-        // Add a message to show location was detected
-        const locationMessage = {
-          id: Date.now(),
-          text: `📍 Location detected: ${location.latitude.toFixed(
-            6
-          )}, ${location.longitude.toFixed(6)}`,
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, locationMessage]);
-      },
-      (error) => {
-        console.error("Error getting location:", error);
-        setIsLoadingLocation(false);
-        let errorMessage = "";
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage =
-              "Location access denied. Please enable location permissions for better assistance.";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = "Location information is unavailable.";
-            break;
-          case error.TIMEOUT:
-            errorMessage = "Location request timed out.";
-            break;
-          default:
-            errorMessage =
-              "An unknown error occurred while retrieving location.";
-            break;
-        }
-
-        const errorLocationMessage = {
-          id: Date.now(),
-          text: errorMessage,
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorLocationMessage]);
-      },
-      {
+    try {
+      const position = await getCurrentCoordinates({
         enableHighAccuracy: true,
         timeout: 15000,
-        maximumAge: 300000, // 5 minutes cache
+        maximumAge: 300000,
+      });
+      const location = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+        timestamp: new Date().toISOString(),
+      };
+      setUserLocation(location);
+      console.log("Location obtained:", location);
+
+      const locationMessage = {
+        id: Date.now(),
+        text: `📍 Location detected: ${location.latitude.toFixed(
+          6
+        )}, ${location.longitude.toFixed(6)}`,
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, locationMessage]);
+    } catch (error) {
+      console.error("Error getting location:", error);
+      let errorMessage = "";
+      switch (error.code) {
+        case 1:
+          errorMessage =
+            "Location access denied. Please enable location permissions for better assistance.";
+          break;
+        case 2:
+          errorMessage = "Location information is unavailable.";
+          break;
+        case 3:
+          errorMessage = "Location request timed out.";
+          break;
+        default:
+          errorMessage =
+            error.message ||
+            "An unknown error occurred while retrieving location.";
+          break;
       }
-    );
+
+      const errorLocationMessage = {
+        id: Date.now(),
+        text: errorMessage,
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorLocationMessage]);
+    } finally {
+      setIsLoadingLocation(false);
+    }
   };
 
   const handleSendMessage = async (overrideText = null) => {
@@ -193,12 +188,8 @@ const Chatbot = () => {
 
       console.log("Sending to backend:", requestBody);
 
-      const response = await fetch("/api/complaints/process", {
+      const response = await apiFetch("/complaints/process", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // Include credentials for session
         body: JSON.stringify(requestBody),
       });
 
@@ -236,99 +227,73 @@ const Chatbot = () => {
 
           // Automatically request location when coordinates are needed
           if (!userLocation) {
-            setTimeout(() => {
+            setTimeout(async () => {
               setIsLoadingLocation(true);
-              navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                  const location = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                    accuracy: position.coords.accuracy,
-                  };
-                  setUserLocation({
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    accuracy: position.coords.accuracy,
-                    timestamp: new Date().toISOString(),
-                  });
-                  setIsLoadingLocation(false);
-
-                  // Location obtained, now send the same complaint with coordinates
-                  try {
-                    const confirmResponse = await fetch(
-                      "/api/complaints/process",
-                      {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
-                        credentials: "include",
-                        body: JSON.stringify({
-                          rawText: currentInput,
-                          lat: location.lat,
-                          lng: location.lng,
-                        }),
-                      }
-                    );
-
-                    if (confirmResponse.ok) {
-                      const confirmData = await confirmResponse.json();
-                      let confirmMessage = "";
-
-                      if (confirmData.ticketId) {
-                        confirmMessage = `✅ Complaint registered successfully! Your ticket ID is: ${confirmData.ticketId}. Department: ${confirmData.department}. Status: ${confirmData.status}.`;
-                      } else {
-                        confirmMessage =
-                          confirmData.message || "Complaint processed.";
-                      }
-
-                      const locationBotMessage = {
-                        id: Date.now() + 2,
-                        text: confirmMessage,
-                        sender: "bot",
-                        timestamp: new Date(),
-                      };
-                      setMessages((prev) => [...prev, locationBotMessage]);
-                    }
-                  } catch (error) {
-                    console.error("Error confirming complaint:", error);
-                    const errorMessage = {
-                      id: Date.now() + 2,
-                      text: "Sorry, there was an error processing your complaint. Please try again.",
-                      sender: "bot",
-                      timestamp: new Date(),
-                    };
-                    setMessages((prev) => [...prev, errorMessage]);
-                  }
-                },
-                (error) => {
-                  setIsLoadingLocation(false);
-                  console.error("Error getting location:", error);
-                  const errorMessage = {
-                    id: Date.now() + 2,
-                    text: "Unable to get your location. Please enable location access and try again.",
-                    sender: "bot",
-                    timestamp: new Date(),
-                  };
-                  setMessages((prev) => [...prev, errorMessage]);
-                },
-                {
+              try {
+                const position = await getCurrentCoordinates({
                   enableHighAccuracy: true,
                   timeout: 15000,
                   maximumAge: 300000,
+                });
+                const location = {
+                  lat: position.coords.latitude,
+                  lng: position.coords.longitude,
+                  accuracy: position.coords.accuracy,
+                };
+                setUserLocation({
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude,
+                  accuracy: position.coords.accuracy,
+                  timestamp: new Date().toISOString(),
+                });
+                setIsLoadingLocation(false);
+
+                const confirmResponse = await apiFetch("/complaints/process", {
+                  method: "POST",
+                  body: JSON.stringify({
+                    rawText: currentInput,
+                    lat: location.lat,
+                    lng: location.lng,
+                  }),
+                });
+
+                if (confirmResponse.ok) {
+                  const confirmData = await confirmResponse.json();
+                  let confirmMessage = "";
+
+                  if (confirmData.ticketId) {
+                    confirmMessage = `✅ Complaint registered successfully! Your ticket ID is: ${confirmData.ticketId}. Department: ${confirmData.department}. Status: ${confirmData.status}.`;
+                  } else {
+                    confirmMessage =
+                      confirmData.message || "Complaint processed.";
+                  }
+
+                  const locationBotMessage = {
+                    id: Date.now() + 2,
+                    text: confirmMessage,
+                    sender: "bot",
+                    timestamp: new Date(),
+                  };
+                  setMessages((prev) => [...prev, locationBotMessage]);
                 }
-              );
-            }, 1000); // Small delay for better UX
+              } catch (error) {
+                setIsLoadingLocation(false);
+                console.error("Error confirming complaint with location:", error);
+                const errorMessage = {
+                  id: Date.now() + 2,
+                  text: "Unable to get your location or register complaint. Please enable location access and try again.",
+                  sender: "bot",
+                  timestamp: new Date(),
+                };
+                setMessages((prev) => [...prev, errorMessage]);
+              }
+            }, 1000);
           } else {
             // We already have location, send immediately
             setTimeout(async () => {
               try {
-                const confirmResponse = await fetch("/api/complaints/process", {
+                const confirmResponse = await apiFetch("/complaints/process", {
                   method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  credentials: "include",
                   body: JSON.stringify({
                     rawText: currentInput,
                     lat: userLocation.latitude,
@@ -414,10 +379,10 @@ const Chatbot = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-      const response = await fetch("/api/chat/speech-to-text", {
+      const response = await apiFetch("/chat/speech-to-text", {
         method: "POST",
         body: formData,
-        signal: controller.signal
+        signal: controller.signal,
       });
       
       clearTimeout(timeoutId);
@@ -469,19 +434,19 @@ const Chatbot = () => {
   const handleTextToSpeech = async (text, messageId) => {
     if (speakingMessageId === messageId) {
       // Stop current speech
-      window.speechSynthesis.cancel();
+      stopSpeech();
       setSpeakingMessageId(null);
     } else {
       try {
         // Stop any other speech first
-        window.speechSynthesis.cancel();
+        stopSpeech();
         setSpeakingMessageId(messageId);
         await textToSpeech(text);
       } catch (error) {
         console.error("Text to speech error:", error);
         // Only show alert for actual errors, not user interruptions
         if (!error.message.includes("interrupted")) {
-          alert("Text-to-speech is not supported in your browser.");
+          alert("Text-to-speech is not supported on this device.");
         }
       } finally {
         setSpeakingMessageId(null);
@@ -557,7 +522,7 @@ const Chatbot = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40">
       {/* Hidden file input */}
       <input
         type="file"
@@ -587,7 +552,7 @@ const Chatbot = () => {
       {/* Chat Window */}
       {shouldRender && (
         <div
-          className={`bg-white rounded-lg shadow-2xl border border-gray-200 w-[90vw] max-w-[480px] h-[70vh] max-h-[600px] flex flex-col transition-all duration-300 ease-out transform origin-bottom-right ${
+          className={`bg-white rounded-xl shadow-2xl border border-gray-200 w-[calc(100vw-2rem)] sm:w-[90vw] max-w-[480px] h-[68vh] sm:h-[70vh] max-h-[600px] flex flex-col transition-all duration-300 ease-out transform origin-bottom-right ${
             isOpen
               ? "translate-y-0 opacity-100 scale-100"
               : "translate-y-4 opacity-0 scale-95"

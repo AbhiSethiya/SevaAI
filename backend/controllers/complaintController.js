@@ -3,7 +3,27 @@ const Complaint = require("../models/Complaint");
 const { analyze } = require("../services/geminiService");
 const generateTicketId = require("../utils/generateTicketId");
 const cloudinary = require("../config/cloudinary"); // optional if you want to upload images
+const streamifier = require("streamifier");
 const mongoose = require("mongoose");
+
+const isCloudinaryConfigured = () =>
+  Boolean(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET
+  );
+
+const uploadBufferToCloudinary = (file) =>
+  new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: "complaints", resource_type: "auto" },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    streamifier.createReadStream(file.buffer).pipe(uploadStream);
+  });
 
 const festivalEvents = require("../utils/festivalEvents.json");
 
@@ -189,14 +209,23 @@ const submitComplaint = async (req, res) => {
 
     let uploadedImages = [];
     if (req.files?.length) {
-      const uploadPromises = req.files.map((file) =>
-        cloudinary.uploader.upload(file.path, {
-          folder: "complaints",
-          resource_type: "auto",
-        })
-      );
-      const results = await Promise.all(uploadPromises);
-      uploadedImages = results.map((r) => r.secure_url);
+      if (isCloudinaryConfigured()) {
+        const results = await Promise.all(
+          req.files.map((file) =>
+            file.buffer
+              ? uploadBufferToCloudinary(file)
+              : cloudinary.uploader.upload(file.path, {
+                  folder: "complaints",
+                  resource_type: "auto",
+                })
+          )
+        );
+        uploadedImages = results.map((r) => r.secure_url);
+      } else {
+        console.warn(
+          "Cloudinary not configured; skipping remote image upload for complaint submission."
+        );
+      }
     }
 
     const ticketId = generateTicketId();

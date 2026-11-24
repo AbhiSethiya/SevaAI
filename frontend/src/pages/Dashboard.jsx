@@ -1056,11 +1056,48 @@ const Dashboard = () => {
       {/* Custom Header */}
       <CustomHeader />
 
+      {/* Mobile Tab Navigation */}
+      <div className="md:hidden bg-white border-b border-gray-200 px-3 py-2 flex items-center gap-2 overflow-x-auto sticky top-0 z-30">
+        <button
+          onClick={() => handleTabChange("dashboard")}
+          className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+            activeTab === "dashboard"
+              ? "text-primary bg-primary-50"
+              : "text-text-light hover:text-text hover:bg-gray-50"
+          }`}
+        >
+          <BarChart3 className="h-4 w-4 mr-2" />
+          Dashboard
+        </button>
+        <button
+          onClick={() => handleTabChange("complaints")}
+          className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+            activeTab === "complaints"
+              ? "text-primary bg-primary-50"
+              : "text-text-light hover:text-text hover:bg-gray-50"
+          }`}
+        >
+          <FileText className="h-4 w-4 mr-2" />
+          Complaints
+        </button>
+        <button
+          onClick={() => handleTabChange("workers")}
+          className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+            activeTab === "workers"
+              ? "text-primary bg-primary-50"
+              : "text-text-light hover:text-text hover:bg-gray-50"
+          }`}
+        >
+          <Users className="h-4 w-4 mr-2" />
+          Workers
+        </button>
+      </div>
+
       {/* Main Dashboard Layout */}
-      <div className="flex">
+      <div className="flex flex-col md:flex-row">
         {/* Sidebar */}
         <div
-          className="w-64 bg-white shadow-lg"
+          className="hidden md:block w-64 bg-white shadow-lg flex-shrink-0"
           style={{ minHeight: "calc(100vh - 73px)" }}
         >
           <motion.nav className="mt-6 px-4" variants={itemVariants}>
@@ -1125,7 +1162,7 @@ const Dashboard = () => {
 
         {/* Main Content */}
         <motion.div
-          className="flex-1 p-6 bg-gray-50"
+          className="flex-1 min-w-0 p-4 sm:p-6 bg-gray-50"
           style={{ minHeight: "calc(100vh - 73px)" }}
           variants={itemVariants}
         >
