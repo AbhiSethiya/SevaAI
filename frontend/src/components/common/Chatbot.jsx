@@ -23,6 +23,7 @@ import { getCurrentCoordinates } from "../../lib/native";
 import { useAuth } from "../../contexts/AuthContext";
 import { useChatbot } from "../../contexts/ChatbotContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { isNativeApp } from "../../lib/config";
 
 const Chatbot = () => {
   const { user, openAuthModal } = useAuth();
@@ -541,8 +542,8 @@ const Chatbot = () => {
         style={{ display: "none" }}
       />
 
-      {/* Chat Widget */}
-      {!shouldRender && (
+      {/* Chat Widget - hidden on native Android when closed because Bottom Nav & Home have direct AI buttons */}
+      {!shouldRender && !isNativeApp() && (
         <button
           onClick={() => {
             if (!user) {

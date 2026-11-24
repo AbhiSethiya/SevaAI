@@ -44,6 +44,7 @@ import Card from "../components/common/Card";
 import { useAuth } from "../contexts/AuthContext";
 import { useChatbot } from "../contexts/ChatbotContext";
 import { useLanguage } from "../contexts/LanguageContext";
+import { isNativeApp } from "../lib/config";
 
 // Hero Section Component
 const HeroSection = () => {
@@ -846,8 +847,166 @@ const StatsSection = () => {
   );
 };
 
+// Simple Action-First Android App Home Screen
+const AndroidHome = () => {
+  const { user, openAuthModal } = useAuth();
+  const { openChatbot } = useChatbot();
+  const { t } = useLanguage();
+
+  const displayName = user?.username
+    ? user.username.replace(/@.*$/, "")
+    : null;
+
+  const handleVoicePress = () => {
+    if (!user) {
+      openAuthModal();
+      return;
+    }
+    openChatbot();
+  };
+
+  return (
+    <div className="min-h-[calc(100vh-8rem)] bg-slate-50 px-4 pt-4 pb-8 space-y-4 select-none">
+      {/* Greeting Card */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <h2 className="text-xl font-bold text-gray-900">
+          {displayName
+            ? `${t("appHome.greeting")}, ${displayName}!`
+            : t("appHome.welcomeTitle")}
+        </h2>
+        <p className="text-sm text-gray-600 mt-0.5">
+          {t("appHome.welcomeSub")}
+        </p>
+        {!user && (
+          <button
+            type="button"
+            onClick={openAuthModal}
+            className="mt-3 w-full py-2.5 px-4 rounded-xl bg-blue-50 text-blue-700 font-semibold text-sm border border-blue-200 active:scale-[0.99] transition-transform"
+          >
+            {t("appHome.loginPrompt")} →
+          </button>
+        )}
+      </div>
+
+      {/* Primary Big Action: Speak / Voice AI */}
+      <button
+        type="button"
+        onClick={handleVoicePress}
+        className="w-full text-left bg-gradient-to-br from-blue-600 to-blue-800 text-white rounded-2xl p-5 shadow-lg active:scale-[0.98] transition-transform"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-orange-500 flex items-center justify-center shrink-0 shadow-md">
+            <Mic className="w-7 h-7 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-bold leading-snug">
+              {t("appHome.voiceCardTitle")}
+            </h3>
+            <p className="text-xs text-blue-100 mt-1 leading-relaxed">
+              {t("appHome.voiceCardSub")}
+            </p>
+          </div>
+          <ArrowRight className="w-5 h-5 text-blue-200 shrink-0" />
+        </div>
+      </button>
+
+      {/* 2x2 Simple Action Grid */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link
+          to="/register-complaint"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:scale-[0.98] transition-transform flex flex-col gap-2.5"
+        >
+          <div className="w-11 h-11 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+            <FileText className="w-6 h-6" />
+          </div>
+          <div>
+            <h4 className="font-bold text-gray-900 text-sm leading-tight">
+              {t("appHome.reportTitle")}
+            </h4>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {t("appHome.reportSub")}
+            </p>
+          </div>
+        </Link>
+
+        <Link
+          to="/my-complaints"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:scale-[0.98] transition-transform flex flex-col gap-2.5"
+        >
+          <div className="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <CheckCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <h4 className="font-bold text-gray-900 text-sm leading-tight">
+              {t("appHome.myIssuesTitle")}
+            </h4>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {t("appHome.myIssuesSub")}
+            </p>
+          </div>
+        </Link>
+
+        <Link
+          to="/heatmaps"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:scale-[0.98] transition-transform flex flex-col gap-2.5"
+        >
+          <div className="w-11 h-11 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+            <MapPin className="w-6 h-6" />
+          </div>
+          <div>
+            <h4 className="font-bold text-gray-900 text-sm leading-tight">
+              {t("appHome.mapTitle")}
+            </h4>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {t("appHome.mapSub")}
+            </p>
+          </div>
+        </Link>
+
+        <Link
+          to="/faq"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:scale-[0.98] transition-transform flex flex-col gap-2.5"
+        >
+          <div className="w-11 h-11 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+            <HelpCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <h4 className="font-bold text-gray-900 text-sm leading-tight">
+              {t("appHome.faqTitle")}
+            </h4>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {t("appHome.faqSub")}
+            </p>
+          </div>
+        </Link>
+      </div>
+
+      {/* Tap-to-call Helpline Card */}
+      <a
+        href="tel:1800112345"
+        className="flex items-center justify-between bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:bg-gray-50"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center">
+            <Phone className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">{t("appHome.helplineLabel")}</p>
+            <p className="text-sm font-bold text-gray-900">1800-11-2345</p>
+          </div>
+        </div>
+        <ArrowRight className="w-4 h-4 text-gray-400" />
+      </a>
+    </div>
+  );
+};
+
 // Main HomePage Component
 const HomePage = () => {
+  if (isNativeApp()) {
+    return <AndroidHome />;
+  }
+
   return (
     <>
       <HeroSection />
