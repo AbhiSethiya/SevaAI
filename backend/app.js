@@ -23,6 +23,7 @@ app.set("trust proxy", 1);
 connectDB();
 
 const allowedStaticOrigins = new Set([
+  "https://seva-ai-98f1.onrender.com",
   "http://localhost:5000",
   "http://localhost:5173",
   "http://127.0.0.1:5173",
@@ -42,6 +43,7 @@ if (process.env.CORS_ORIGINS) {
 const isAllowedOrigin = (origin) => {
   if (!origin) return true; // Mobile WebView / native clients / curl
   if (allowedStaticOrigins.has(origin)) return true;
+  if (/^https:\/\/[a-z0-9-]+\.onrender\.com$/i.test(origin)) return true;
   // Allow localhost, emulator (10.0.2.2), and local Wi-Fi LAN origins for dev/mobile
   return /^https?:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(
     origin
@@ -50,16 +52,23 @@ const isAllowedOrigin = (origin) => {
 
 app.use(express.json());
 app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (isAllowedOrigin(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error(`Origin ${origin} not allowed by CORS`));
-    },
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  cors((req, callback) => {
+    const origin = req.header("Origin");
+    const host = req.get("host");
+    const isSameOrigin =
+      origin &&
+      host &&
+      (origin === `https://${host}` || origin === `http://${host}`);
+
+    if (!origin || isSameOrigin || isAllowedOrigin(origin)) {
+      return callback(null, {
+        origin: true,
+        credentials: true,
+        allowedHeaders: ["Content-Type", "Authorization"],
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      });
+    }
+    return callback(null, { origin: false });
   })
 ); // React frontend & Capacitor Android app
 if (process.env.NODE_ENV === "development") app.use(logger("dev"));
