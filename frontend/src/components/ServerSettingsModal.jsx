@@ -8,8 +8,10 @@ import {
   SERVER_PRESETS,
   isNativeApp,
 } from "../lib/config";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const ServerSettingsModal = ({ isOpen, onClose, onSaved }) => {
+  const { t } = useLanguage();
   const [urlInput, setUrlInput] = useState("");
   const [testing, setTesting] = useState(false);
   const [status, setStatus] = useState(null);
@@ -88,12 +90,12 @@ const ServerSettingsModal = ({ isOpen, onClose, onSaved }) => {
           </div>
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              Backend Server Settings
+              {t("serverSettings.title")}
             </h2>
             <p className="text-xs text-gray-500">
               {isNativeApp()
-                ? "Configure where this Android app connects for AI & database APIs"
-                : "Optional API server URL override (leave blank for default proxy)"}
+                ? t("serverSettings.subtitleNative")
+                : t("serverSettings.subtitleWeb")}
             </p>
           </div>
         </div>
@@ -104,7 +106,7 @@ const ServerSettingsModal = ({ isOpen, onClose, onSaved }) => {
               htmlFor="sevaai-server-url"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Server URL
+              {t("serverSettings.urlLabel")}
             </label>
             <input
               id="sevaai-server-url"
@@ -118,7 +120,7 @@ const ServerSettingsModal = ({ isOpen, onClose, onSaved }) => {
 
           <div>
             <p className="text-xs font-medium text-gray-600 mb-2">
-              Quick Presets:
+              {t("serverSettings.presetsTitle")}
             </p>
             <div className="grid grid-cols-1 gap-2">
               <button
@@ -127,7 +129,7 @@ const ServerSettingsModal = ({ isOpen, onClose, onSaved }) => {
                 className="text-left px-3 py-2 text-xs bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
               >
                 <span className="font-semibold text-emerald-800">
-                  Render Cloud (Live Anywhere):
+                  {t("serverSettings.renderCloud")}
                 </span>{" "}
                 <span className="text-emerald-700 block truncate">
                   {SERVER_PRESETS.CLOUD_RENDER}

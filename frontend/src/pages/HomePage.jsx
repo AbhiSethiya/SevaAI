@@ -43,11 +43,13 @@ import Button from "../components/common/Button";
 import Card from "../components/common/Card";
 import { useAuth } from "../contexts/AuthContext";
 import { useChatbot } from "../contexts/ChatbotContext";
+import { useLanguage } from "../contexts/LanguageContext";
 
 // Hero Section Component
 const HeroSection = () => {
   const { user, openAuthModal } = useAuth();
   const { openChatbot } = useChatbot();
+  const { t } = useLanguage();
 
   const handleVoiceToggle = () => {
     if (!user) {
@@ -97,7 +99,7 @@ const HeroSection = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
               >
-                Speak. Serve.{" "}
+                {t("hero.titlePrefix")}{" "}
                 <motion.span
                   className="text-orange-400"
                   animate={{
@@ -110,10 +112,10 @@ const HeroSection = () => {
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  Simplify
+                  {t("hero.titleHighlight")}
                 </motion.span>
                 <br />
-                Municipal Services.
+                {t("hero.titleSuffix")}
               </motion.h1>
 
               {/* Subheading */}
@@ -123,9 +125,7 @@ const HeroSection = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.7 }}
               >
-                Your AI-powered voice assistant for seamless government
-                services. Report issues, track complaints, and access municipal
-                services instantly in your preferred language.
+                {t("hero.subtitle")}
               </motion.p>
 
               {/* CTA Buttons */}
@@ -145,7 +145,7 @@ const HeroSection = () => {
                       size="lg"
                       className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-6 text-lg w-full sm:w-auto shadow-lg hover:shadow-xl transition-shadow"
                     >
-                      Start Voice Service
+                      {t("hero.startVoice")}
                     </Button>
                   </motion.div>
                 </Link>
@@ -159,7 +159,7 @@ const HeroSection = () => {
                     size="lg"
                     className="border-white/30 text-white hover:bg-white/10 px-8 py-6 text-lg w-full sm:w-auto backdrop-blur-sm"
                   >
-                    Learn More
+                    {t("hero.learnMore")}
                   </Button>
                 </motion.div>
               </motion.div>
@@ -171,10 +171,7 @@ const HeroSection = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 1.1 }}
               >
-                <p>
-                  💬 Say: "Report streetlight issue on MG Road" or "Track my
-                  complaint"
-                </p>
+                <p>{t("hero.voiceHint")}</p>
               </motion.div>
             </motion.div>
 

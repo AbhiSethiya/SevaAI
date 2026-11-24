@@ -29,6 +29,7 @@ import {
   Map,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
 import Chatbot from "../components/common/Chatbot";
 
 // Header Component (extracted from citizen seva)
@@ -36,7 +37,6 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHighContrast, setIsHighContrast] = useState(false);
   const [isLargeText, setIsLargeText] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState("en");
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
@@ -45,6 +45,7 @@ const Header = () => {
   const userMenuRef = useRef(null);
   const { user, logout, openAuthModal, serverOnline, openServerSettings } =
     useAuth();
+  const { language, setLanguage, t } = useLanguage();
 
   const toggleHighContrast = () => {
     setIsHighContrast(!isHighContrast);
@@ -65,10 +66,10 @@ const Header = () => {
   ];
 
   const navItems = [
-    { name: "Home", href: "/" },
-    { name: "Register Complaint", href: "/register-complaint" },
-    { name: "Heatmaps", href: "/heatmaps" },
-    { name: "FAQ", href: "/faq" },
+    { name: t("nav.home"), href: "/" },
+    { name: t("nav.registerComplaint"), href: "/register-complaint" },
+    { name: t("nav.heatmaps"), href: "/heatmaps" },
+    { name: t("nav.faq"), href: "/faq" },
   ];
 
   // Helper function to get display name
@@ -113,7 +114,34 @@ const Header = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Language Switcher Pill */}
+            <div className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 p-0.5 text-xs">
+              <Globe className="w-3 h-3 text-blue-600 ml-1.5 mr-1 hidden sm:inline" />
+              <button
+                type="button"
+                onClick={() => setLanguage("en")}
+                className={`px-2 py-0.5 rounded-full font-medium transition-colors ${
+                  language === "en"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage("hi")}
+                className={`px-2 py-0.5 rounded-full font-medium transition-colors ${
+                  language === "hi"
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                हिन्दी
+              </button>
+            </div>
+
             {/* Server Connection Status / Settings */}
             <button
               type="button"
@@ -127,12 +155,12 @@ const Header = () => {
             >
               <Server className="w-3 h-3" />
               <span className="hidden sm:inline">
-                {serverOnline ? "Connected" : "Server Offline"}
+                {serverOnline ? t("common.connected") : t("common.offline")}
               </span>
             </button>
 
             {/* Helpline */}
-            <div className="flex items-center gap-1 text-blue-600">
+            <div className="hidden sm:flex items-center gap-1 text-blue-600">
               <Phone className="w-3 h-3" />
               <span className="font-medium">1800-11-2345</span>
             </div>
@@ -148,9 +176,9 @@ const Header = () => {
             </div>
             <div>
               <Link to="/">
-                <h1 className="text-xl font-bold text-blue-600">SevaAI</h1>
+                <h1 className="text-xl font-bold text-blue-600">{t("common.appName")}</h1>
                 <p className="text-xs text-gray-600">
-                  Voice-Based Municipal Assistant
+                  {t("common.tagline")}
                 </p>
               </Link>
             </div>
@@ -267,7 +295,7 @@ const Header = () => {
                 onClick={openAuthModal}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
               >
-                Login
+                {t("nav.login")}
               </button>
             )}
           </div>
@@ -347,7 +375,7 @@ const Header = () => {
                       className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
                     >
                       <FileText className="h-4 w-4 mr-3 text-gray-400" />
-                      My Complaints
+                      {t("nav.myComplaints")}
                     </Link>
                     <button
                       onClick={() => {
@@ -357,7 +385,7 @@ const Header = () => {
                       className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md"
                     >
                       <LogOut className="h-4 w-4 mr-3" />
-                      Sign Out
+                      {t("nav.signOut")}
                     </button>
                   </div>
                 ) : (
@@ -369,7 +397,7 @@ const Header = () => {
                     className="flex items-center w-full px-3 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 rounded-md"
                   >
                     <User className="h-4 w-4 mr-3" />
-                    Login / Register
+                    {t("nav.login")} / {t("nav.register")}
                   </button>
                 )}
               </div>

@@ -22,20 +22,29 @@ import { apiFetch } from "../../lib/api";
 import { getCurrentCoordinates } from "../../lib/native";
 import { useAuth } from "../../contexts/AuthContext";
 import { useChatbot } from "../../contexts/ChatbotContext";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const Chatbot = () => {
   const { user, openAuthModal } = useAuth();
   const { shouldOpen, closeChatbot } = useChatbot();
+  const { language, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState(() => [
     {
       id: 1,
-      text: "Hello! I'm your municipal assistant. I can help you register complaints, check status, or answer questions. You can type or speak to me!",
+      text: t("chatbot.welcome"),
       sender: "bot",
       timestamp: new Date(),
     },
   ]);
+
+  // Keep initial welcome message synced with selected language
+  useEffect(() => {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === 1 ? { ...m, text: t("chatbot.welcome") } : m))
+    );
+  }, [language, t]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -441,7 +450,7 @@ const Chatbot = () => {
         // Stop any other speech first
         stopSpeech();
         setSpeakingMessageId(messageId);
-        await textToSpeech(text);
+        await textToSpeech(text, { lang: language === "hi" ? "hi-IN" : "en-US" });
       } catch (error) {
         console.error("Text to speech error:", error);
         // Only show alert for actual errors, not user interruptions
@@ -565,9 +574,9 @@ const Chatbot = () => {
                 <h1 className="text-xl font-bold text-blue-600">सेवा</h1>
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Seva AI</h3>
+                <h3 className="font-semibold text-sm">{t("chatbot.title")}</h3>
                 <div className="flex items-center space-x-1">
-                  <p className="text-xs text-primary-100">Online now</p>
+                  <p className="text-xs text-primary-100">{t("chatbot.subtitle")}</p>
                   {userLocation && (
                     <MapPin
                       className="h-3 w-3 text-green-300"
@@ -728,7 +737,7 @@ const Chatbot = () => {
                     }}
                     className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1.5 rounded shadow flex-1 transition-colors"
                   >
-                    Yes, Send
+                    {t("chatbot.yesSend")}
                   </button>
                   <button
                     onClick={() => {
@@ -739,7 +748,7 @@ const Chatbot = () => {
                     }}
                     className="bg-gray-500 hover:bg-gray-600 text-white text-xs px-3 py-1.5 rounded shadow flex-1 transition-colors"
                   >
-                    Try Again
+                    {t("chatbot.tryAgain")}
                   </button>
                   <button
                     onClick={() => {
@@ -747,7 +756,7 @@ const Chatbot = () => {
                     }}
                     className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded shadow flex-1 transition-colors"
                   >
-                    Cancel
+                    {t("chatbot.cancel")}
                   </button>
                 </div>
               </div>
@@ -789,7 +798,7 @@ const Chatbot = () => {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={
-                  isRecording ? "Listening..." : "Type your message..."
+                  isRecording ? t("chatbot.listening") : t("chatbot.placeholder")
                 }
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 disabled={isTyping || isRecording}

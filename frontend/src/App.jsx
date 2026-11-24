@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ChatbotProvider } from "./contexts/ChatbotContext";
+import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
 import AuthModal from "./components/AuthModal";
 import ServerSettingsModal from "./components/ServerSettingsModal";
 import Layout from "./layouts/Layout";
@@ -78,14 +79,25 @@ const HomePageWrapper = () => {
 // App Routes Component (needs to be inside AuthProvider to use useAuth)
 const AppRoutes = () => {
   const {
+    user,
+    loading,
     showAuthModal,
+    openAuthModal,
     closeAuthModal,
     showServerSettings,
     closeServerSettings,
     refreshConnection,
   } = useAuth();
+  const { hasChosenLanguage } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // On initial launch (before user picks a language), show Language -> Login step
+  useEffect(() => {
+    if (!loading && !user && !hasChosenLanguage && !showAuthModal && !showServerSettings) {
+      openAuthModal();
+    }
+  }, [loading, user, hasChosenLanguage, showAuthModal, showServerSettings, openAuthModal]);
 
   useEffect(() => {
     const cleanup = initNativeShell((canGoBack, exitApp) => {
@@ -193,13 +205,15 @@ const AppRoutes = () => {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <ChatbotProvider>
-          <div className="App">
-            <AppRoutes />
-          </div>
-        </ChatbotProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <ChatbotProvider>
+            <div className="App">
+              <AppRoutes />
+            </div>
+          </ChatbotProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </Router>
   );
 }

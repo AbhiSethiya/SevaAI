@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const { register } = useAuth();
+  const { t } = useLanguage();
 
   const handleChange = (e) => {
     setFormData({
@@ -82,7 +84,7 @@ const Register = () => {
     <div className="px-6">
       <div className="space-y-4">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-          Create Account
+          {t("auth.createAccount")}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -90,7 +92,7 @@ const Register = () => {
               htmlFor="fullName"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Full Name:
+              {t("auth.fullName")}
             </label>
             <input
               type="text"
@@ -101,7 +103,7 @@ const Register = () => {
               required
               disabled={isLoading}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              placeholder="Enter your full name"
+              placeholder={t("auth.fullNamePlaceholder")}
             />
           </div>
           <div>
@@ -109,7 +111,7 @@ const Register = () => {
               htmlFor="email"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Email:
+              {t("auth.email")}
             </label>
             <input
               type="email"
@@ -120,7 +122,7 @@ const Register = () => {
               required
               disabled={isLoading}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              placeholder="Enter your email"
+              placeholder={t("auth.emailPlaceholder")}
             />
           </div>
           <div>
@@ -128,7 +130,7 @@ const Register = () => {
               htmlFor="phone"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Phone Number:
+              {t("auth.phone")}
             </label>
             <input
               type="tel"
@@ -139,7 +141,7 @@ const Register = () => {
               required
               disabled={isLoading}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              placeholder="Enter your phone number"
+              placeholder={t("auth.phonePlaceholder")}
             />
           </div>
           <div>
@@ -147,7 +149,7 @@ const Register = () => {
               htmlFor="username"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Username:
+              {t("auth.username")}
             </label>
             <input
               type="text"
@@ -158,7 +160,7 @@ const Register = () => {
               required
               disabled={isLoading}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              placeholder="Choose a username"
+              placeholder={t("auth.usernamePlaceholder")}
             />
           </div>
           <div>
@@ -166,7 +168,7 @@ const Register = () => {
               htmlFor="password"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Password:
+              {t("auth.password")}
             </label>
             <input
               type="password"
@@ -178,7 +180,7 @@ const Register = () => {
               disabled={isLoading}
               minLength={6}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              placeholder="Enter your password (min 6 characters)"
+              placeholder={t("auth.passwordPlaceholder")}
             />
           </div>
           <div>
@@ -186,7 +188,7 @@ const Register = () => {
               htmlFor="confirmPassword"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Confirm Password:
+              {t("auth.confirmPassword")}
             </label>
             <input
               type="password"
@@ -197,7 +199,7 @@ const Register = () => {
               required
               disabled={isLoading}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              placeholder="Confirm your password"
+              placeholder={t("auth.confirmPasswordPlaceholder")}
             />
           </div>
           <button
@@ -205,7 +207,7 @@ const Register = () => {
             disabled={isLoading}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isLoading ? "Registering..." : "Register"}
+            {isLoading ? t("auth.registering") : t("auth.registerBtn")}
           </button>
         </form>
         {message && (

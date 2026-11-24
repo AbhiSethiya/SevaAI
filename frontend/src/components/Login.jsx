@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useAuth();
+  const { t } = useLanguage();
 
   const handleChange = (e) => {
     setFormData({
@@ -37,7 +39,7 @@ const Login = () => {
     <div className="px-6">
       <div className="space-y-4">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-          Welcome Back
+          {t("auth.welcomeBack")}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -45,7 +47,7 @@ const Login = () => {
               htmlFor="emailOrPhone"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Email or Mobile Number:
+              {t("auth.emailOrPhone")}
             </label>
             <input
               type="text"
@@ -56,7 +58,7 @@ const Login = () => {
               required
               disabled={isLoading}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              placeholder="Enter your email or mobile number"
+              placeholder={t("auth.emailOrPhonePlaceholder")}
             />
           </div>
           <div>
@@ -64,7 +66,7 @@ const Login = () => {
               htmlFor="password"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Password:
+              {t("auth.password")}
             </label>
             <input
               type="password"
@@ -75,7 +77,7 @@ const Login = () => {
               required
               disabled={isLoading}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              placeholder="Enter your password"
+              placeholder={t("auth.passwordPlaceholder")}
             />
           </div>
           <button
@@ -83,7 +85,7 @@ const Login = () => {
             disabled={isLoading}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? t("auth.loggingIn") : t("auth.loginBtn")}
           </button>
         </form>
         {message && (
