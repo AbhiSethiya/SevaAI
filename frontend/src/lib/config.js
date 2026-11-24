@@ -1,4 +1,5 @@
-import { Capacitor } from "@capacitor/core";
+// No static Capacitor import — use window.Capacitor set by native bridge at runtime.
+// This keeps the web build completely free of native-only module side effects.
 
 const STORAGE_KEYS = {
   API_BASE_URL: "sevaai_api_base_url",
@@ -19,7 +20,12 @@ export const normalizeBaseUrl = (url) => {
 
 export const isNativeApp = () => {
   try {
-    return Capacitor.isNativePlatform();
+    return (
+      typeof window !== "undefined" &&
+      window.Capacitor &&
+      typeof window.Capacitor.isNativePlatform === "function" &&
+      window.Capacitor.isNativePlatform()
+    );
   } catch {
     return false;
   }

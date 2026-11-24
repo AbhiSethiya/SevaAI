@@ -1,8 +1,40 @@
-import { Capacitor } from "@capacitor/core";
-import { Geolocation } from "@capacitor/geolocation";
-import { App as CapApp } from "@capacitor/app";
-import { StatusBar, Style } from "@capacitor/status-bar";
-import { SplashScreen } from "@capacitor/splash-screen";
+// Detect native platform via the global Capacitor bridge (no static import needed).
+// This avoids any module-level side effects that could crash the web build.
+const isNative = () => {
+  try {
+    return (
+      typeof window !== "undefined" &&
+      window.Capacitor &&
+      typeof window.Capacitor.isNativePlatform === "function" &&
+      window.Capacitor.isNativePlatform()
+    );
+  } catch {
+    return false;
+  }
+};
+
+// Lazy-loaded plugin references — populated only on first native use.
+let Geolocation = null;
+let CapApp = null;
+let StatusBar = null;
+let Style = null;
+let SplashScreen = null;
+let _pluginsLoaded = false;
+
+const loadPlugins = async () => {
+  if (_pluginsLoaded) return;
+  _pluginsLoaded = true;
+  try {
+    Geolocation = (await import("@capacitor/geolocation")).Geolocation;
+    CapApp = (await import("@capacitor/app")).App;
+    const sb = await import("@capacitor/status-bar");
+    StatusBar = sb.StatusBar;
+    Style = sb.Style;
+    SplashScreen = (await import("@capacitor/splash-screen")).SplashScreen;
+  } catch (e) {
+    console.warn("Failed to load Capacitor plugins:", e);
+  }
+};
 
 /**
  * Get current GPS coordinates using Capacitor Geolocation on native Android,
@@ -16,7 +48,10 @@ export const getCurrentCoordinates = async (options = {}) => {
     ...options,
   };
 
-  if (Capacitor.isNativePlatform()) {
+  if (isNative()) {
+    await loadPlugins();
+    if (!Geolocation) throw new Error("Geolocation plugin not available");
+
     const perms = await Geolocation.checkPermissions();
     if (
       perms.location !== "granted" &&
@@ -101,7 +136,7 @@ export const nativeStopSpeak = () => {
  * Ask Android native activity to ensure RECORD_AUDIO permission before getUserMedia.
  */
 export const ensureNativeAudioPermission = async () => {
-  if (!Capacitor.isNativePlatform()) return true;
+  if (!isNative()) return true;
   if (typeof window.AndroidNative?.requestAudioPermission !== "function") {
     return true;
   }
@@ -125,26 +160,40 @@ export const ensureNativeAudioPermission = async () => {
  * Initialize Android status bar, splash screen, and hardware back button.
  */
 export const initNativeShell = (onBack) => {
-  if (!Capacitor.isNativePlatform()) {
+  if (!isNative()) {
     return () => {};
   }
 
-  StatusBar.setBackgroundColor({ color: "#1e40af" }).catch(() => {});
-  StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
-  StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
-  SplashScreen.hide().catch(() => {});
-
-  const backHandlePromise = CapApp.addListener("backButton", ({ canGoBack }) => {
-    if (onBack) {
-      onBack(canGoBack, () => CapApp.exitApp());
-    } else if (canGoBack) {
-      window.history.back();
-    } else {
-      CapApp.exitApp();
+  // Load plugins async, then configure native shell
+  loadPlugins().then(() => {
+    if (StatusBar) {
+      StatusBar.setBackgroundColor({ color: "#1e40af" }).catch(() => {});
+      StatusBar.setStyle({ style: Style?.Dark }).catch(() => {});
+      StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+    }
+    if (SplashScreen) {
+      SplashScreen.hide().catch(() => {});
     }
   });
 
-  return () => {
-    backHandlePromise.then((h) => h.remove()).catch(() => {});
-  };
+  // Back button via dynamic import
+  let backCleanup = () => {};
+  loadPlugins().then(() => {
+    if (CapApp) {
+      const backHandlePromise = CapApp.addListener("backButton", ({ canGoBack }) => {
+        if (onBack) {
+          onBack(canGoBack, () => CapApp.exitApp());
+        } else if (canGoBack) {
+          window.history.back();
+        } else {
+          CapApp.exitApp();
+        }
+      });
+      backCleanup = () => {
+        backHandlePromise.then((h) => h.remove()).catch(() => {});
+      };
+    }
+  });
+
+  return () => backCleanup();
 };
