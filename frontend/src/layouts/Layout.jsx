@@ -413,10 +413,11 @@ const Header = () => {
 
 // Footer Component (extracted from citizen seva)
 const Footer = () => {
+  const { t } = useLanguage();
   const quickLinks = [
-    { name: "Home", href: "/" },
-    { name: "Register Complaint", href: "/register-complaint" },
-    { name: "FAQ", href: "/faq" },
+    { name: t("nav.home"), href: "/" },
+    { name: t("nav.registerComplaint"), href: "/register-complaint" },
+    { name: t("nav.faq"), href: "/faq" },
   ];
 
   const legalLinks = [
@@ -461,28 +462,26 @@ const Footer = () => {
               </div>
 
               <p className="text-white/90 text-sm mb-6 leading-relaxed">
-                Empowering citizens through AI-powered municipal services.
-                Building a smarter, more responsive governance system for
-                Digital India.
+                {t("footerDesc")}
               </p>
 
               {/* Trust Badges */}
               <div className="space-y-2">
                 <div className="inline-flex items-center px-2 py-1 bg-white/10 text-white border border-white/20 rounded text-xs">
                   <Shield className="w-3 h-3 mr-1" />
-                  Government Verified
+                  {t("footerGovVerified")}
                 </div>
                 <br />
                 <div className="inline-flex items-center px-2 py-1 bg-white/10 text-white border border-white/20 rounded text-xs">
                   <Shield className="w-3 h-3 mr-1" />
-                  Data Protected
+                  {t("footerDataProtected")}
                 </div>
               </div>
             </div>
 
             {/* Quick Links */}
             <div>
-              <h4 className="text-lg font-semibold mb-6">Quick Links</h4>
+              <h4 className="text-lg font-semibold mb-6">{t("footer.quickLinks")}</h4>
               <ul className="space-y-3">
                 {quickLinks.map((link) => (
                   <li key={link.name}>
@@ -496,7 +495,7 @@ const Footer = () => {
                 ))}
               </ul>
 
-              <h4 className="text-lg font-semibold mb-4 mt-8">Departments</h4>
+              <h4 className="text-lg font-semibold mb-4 mt-8">{t("footerDepartments")}</h4>
               <ul className="space-y-2">
                 {departments.slice(0, 4).map((dept) => (
                   <li key={dept}>
@@ -508,7 +507,7 @@ const Footer = () => {
 
             {/* Legal & Compliance */}
             <div>
-              <h4 className="text-lg font-semibold mb-6">Legal & Compliance</h4>
+              <h4 className="text-lg font-semibold mb-6">{t("footerLegal")}</h4>
               <ul className="space-y-3">
                 {legalLinks.map((link) => {
                   const Icon = link.icon;
@@ -529,7 +528,7 @@ const Footer = () => {
 
             {/* Contact Information */}
             <div>
-              <h4 className="text-lg font-semibold mb-6">Contact & Support</h4>
+              <h4 className="text-lg font-semibold mb-6">{t("footer.contact")}</h4>
 
               <div className="space-y-4">
                 {/* Helpline */}
@@ -538,7 +537,7 @@ const Footer = () => {
                     <Phone className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-white/70">24/7 Helpline</p>
+                    <p className="text-sm text-white/70">{t("footerHelpline")}</p>
                     <p className="font-semibold">1800-11-2345</p>
                   </div>
                 </div>
@@ -549,7 +548,7 @@ const Footer = () => {
                     <Mail className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-white/70">Email Support</p>
+                    <p className="text-sm text-white/70">{t("footerEmail")}</p>
                     <p className="font-semibold text-sm">
                       support@sevaai.gov.in
                     </p>
@@ -562,14 +561,14 @@ const Footer = () => {
                     <Phone className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm text-white/70">Emergency</p>
+                    <p className="text-sm text-white/70">{t("footerEmergency")}</p>
                     <p className="font-semibold">100 / 102 / 108</p>
                   </div>
                 </div>
               </div>
 
               {/* Social Media */}
-              <h4 className="text-lg font-semibold mb-4 mt-8">Follow Us</h4>
+              <h4 className="text-lg font-semibold mb-4 mt-8">{t("footerFollowUs")}</h4>
               <div className="flex gap-2">
                 {socialLinks.map((social) => {
                   const Icon = social.icon;
@@ -595,19 +594,17 @@ const Footer = () => {
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4 text-sm text-white/80">
-                <span>© 2025 Government of India</span>
+                <span>{t("footerCopyright")}</span>
                 <span>•</span>
-                <span>All Rights Reserved</span>
-                <span>•</span>
-                <span>Last Updated: August 2025</span>
+                <span>{t("footer.rights")}</span>
               </div>
 
               <div className="flex items-center gap-4">
                 <span className="px-2 py-1 bg-green-600/20 text-green-400 border border-green-500/30 rounded text-xs">
-                  Website Secure
+                  {t("footerSecure")}
                 </span>
                 <span className="px-2 py-1 bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded text-xs">
-                  SSL Verified
+                  {t("footerSSL")}
                 </span>
               </div>
             </div>

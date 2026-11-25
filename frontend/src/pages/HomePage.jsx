@@ -263,9 +263,9 @@ const HeroSection = () => {
                   animate={{ y: [0, -5, 0] }}
                   transition={{ duration: 3, repeat: Infinity }}
                 >
-                  <p className="text-lg font-medium">Start Assistant</p>
+                  <p className="text-lg font-medium">{t("homeSections.startAssistant")}</p>
                   <p className="text-sm opacity-80">
-                    Click to open your AI municipal assistant
+                    {t("homeSections.startAssistantSub")}
                   </p>
                 </motion.div>
               </motion.div>
@@ -279,6 +279,8 @@ const HeroSection = () => {
 
 // Announcements Section Component
 const AnnouncementsSection = () => {
+  const { t } = useLanguage();
+  const translatedAnnouncements = t("homeSections.announcements") || [];
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -304,45 +306,53 @@ const AnnouncementsSection = () => {
   const announcements = [
     {
       id: 1,
-      title: "New Digital Water Bill Payment System",
+      title: translatedAnnouncements[0]?.title || "New Digital Water Bill Payment System",
       description:
+        translatedAnnouncements[0]?.description ||
         "Citizens can now pay water bills online through our new digital portal. No more standing in queues!",
-      type: "Service Update",
+      type: translatedAnnouncements[0]?.type || "Service Update",
       date: "2025-08-24",
-      priority: "High",
+      priority: translatedAnnouncements[0]?.priority || "High",
+      priorityLevel: "High",
       icon: Droplets,
       color: "bg-blue-100 text-blue-600 border-blue-200",
     },
     {
       id: 2,
-      title: "Street Light Maintenance Drive",
+      title: translatedAnnouncements[1]?.title || "Street Light Maintenance Drive",
       description:
+        translatedAnnouncements[1]?.description ||
         "City-wide street light maintenance will be conducted from August 26-30. Report any issues through voice assistant.",
-      type: "Maintenance",
+      type: translatedAnnouncements[1]?.type || "Maintenance",
       date: "2025-08-23",
-      priority: "Medium",
+      priority: translatedAnnouncements[1]?.priority || "Medium",
+      priorityLevel: "Medium",
       icon: Lightbulb,
       color: "bg-yellow-100 text-yellow-600 border-yellow-200",
     },
     {
       id: 3,
-      title: "Emergency Contact Numbers Updated",
+      title: translatedAnnouncements[2]?.title || "Emergency Contact Numbers Updated",
       description:
+        translatedAnnouncements[2]?.description ||
         "New emergency helpline numbers are now active 24/7 for all municipal services and complaints.",
-      type: "Important",
+      type: translatedAnnouncements[2]?.type || "Important",
       date: "2025-08-22",
-      priority: "Critical",
+      priority: translatedAnnouncements[2]?.priority || "Critical",
+      priorityLevel: "Critical",
       icon: Phone,
       color: "bg-red-100 text-red-600 border-red-200",
     },
     {
       id: 4,
-      title: "Waste Collection Schedule Changes",
+      title: translatedAnnouncements[3]?.title || "Waste Collection Schedule Changes",
       description:
+        translatedAnnouncements[3]?.description ||
         "Updated waste collection timings for residential areas. Check your zone's new schedule.",
-      type: "Schedule",
+      type: translatedAnnouncements[3]?.type || "Schedule",
       date: "2025-08-21",
-      priority: "Medium",
+      priority: translatedAnnouncements[3]?.priority || "Medium",
+      priorityLevel: "Medium",
       icon: Trash2,
       color: "bg-green-100 text-green-600 border-green-200",
     },
@@ -393,7 +403,7 @@ const AnnouncementsSection = () => {
               >
                 <Megaphone className="w-4 h-4" />
               </motion.div>
-              Latest Updates
+              {t("homeSections.latestUpdates")}
             </motion.div>
             <motion.h2
               className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
@@ -401,7 +411,7 @@ const AnnouncementsSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              Municipal Announcements
+              {t("homeSections.announcementsTitle")}
             </motion.h2>
             <motion.p
               className="text-lg text-gray-600 max-w-2xl mx-auto"
@@ -409,8 +419,7 @@ const AnnouncementsSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              Stay informed about the latest updates, service changes, and
-              important notifications from your municipal corporation.
+              {t("homeSections.announcementsSub")}
             </motion.p>
           </motion.div>
 
@@ -471,7 +480,7 @@ const AnnouncementsSection = () => {
                     </div>
                     <motion.span
                       className={`text-xs px-2 py-1 rounded ${getPriorityColor(
-                        announcement.priority
+                        announcement.priorityLevel
                       )}`}
                       whileHover={{ scale: 1.05 }}
                       initial={{ scale: 0 }}
@@ -506,7 +515,7 @@ const AnnouncementsSection = () => {
                     whileHover={{ x: 5 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
-                    Read More
+                    {t("homeSections.readMore")}
                     <motion.div
                       animate={{ x: [0, 3, 0] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
@@ -526,6 +535,8 @@ const AnnouncementsSection = () => {
 
 // Key Services Section Component
 const KeyServicesSection = () => {
+  const { t } = useLanguage();
+  const translatedServices = t("homeSections.services") || [];
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -553,63 +564,73 @@ const KeyServicesSection = () => {
   const keyServices = [
     {
       id: 1,
-      title: "Birth & Death Certificates",
+      title: translatedServices[0]?.title || "Birth & Death Certificates",
       description:
+        translatedServices[0]?.description ||
         "Apply for and download birth/death certificates online instantly",
       icon: FileText,
-      features: ["Instant Download", "Digital Verification", "24/7 Available"],
-      completionTime: "Same Day",
+      features: translatedServices[0]?.features || ["Instant Download", "Digital Verification", "24/7 Available"],
+      completionTime: translatedServices[0]?.completionTime || "Same Day",
       color: "bg-green-100 text-green-600",
       bgGradient: "from-green-50 to-emerald-50",
     },
     {
       id: 2,
-      title: "Property Tax Payment",
-      description: "Pay property taxes online with multiple payment options",
+      title: translatedServices[1]?.title || "Property Tax Payment",
+      description:
+        translatedServices[1]?.description ||
+        "Pay property taxes online with multiple payment options",
       icon: Bell,
-      features: ["Online Payment", "Payment History", "Auto Reminders"],
-      completionTime: "Instant",
+      features: translatedServices[1]?.features || ["Online Payment", "Payment History", "Auto Reminders"],
+      completionTime: translatedServices[1]?.completionTime || "Instant",
       color: "bg-blue-100 text-blue-600",
       bgGradient: "from-blue-50 to-cyan-50",
     },
     {
       id: 3,
-      title: "Trade License Application",
+      title: translatedServices[2]?.title || "Trade License Application",
       description:
+        translatedServices[2]?.description ||
         "Apply for new trade licenses or renew existing ones digitally",
       icon: Award,
-      features: ["Digital Application", "Status Tracking", "Document Upload"],
-      completionTime: "7-15 Days",
+      features: translatedServices[2]?.features || ["Digital Application", "Status Tracking", "Document Upload"],
+      completionTime: translatedServices[2]?.completionTime || "7-15 Days",
       color: "bg-purple-100 text-purple-600",
       bgGradient: "from-purple-50 to-indigo-50",
     },
     {
       id: 4,
-      title: "Water Connection Services",
-      description: "Apply for new water connections or report service issues",
+      title: translatedServices[3]?.title || "Water Connection Services",
+      description:
+        translatedServices[3]?.description ||
+        "Apply for new water connections or report service issues",
       icon: Droplets,
-      features: ["New Connections", "Billing Support", "Quality Testing"],
-      completionTime: "10-30 Days",
+      features: translatedServices[3]?.features || ["New Connections", "Billing Support", "Quality Testing"],
+      completionTime: translatedServices[3]?.completionTime || "10-30 Days",
       color: "bg-blue-100 text-blue-600",
       bgGradient: "from-blue-50 to-teal-50",
     },
     {
       id: 5,
-      title: "Building Plan Approval",
-      description: "Submit and track building plan approvals for construction",
+      title: translatedServices[4]?.title || "Building Plan Approval",
+      description:
+        translatedServices[4]?.description ||
+        "Submit and track building plan approvals for construction",
       icon: ExternalLink,
-      features: ["Online Submission", "Approval Tracking", "Fee Calculation"],
-      completionTime: "30-45 Days",
+      features: translatedServices[4]?.features || ["Online Submission", "Approval Tracking", "Fee Calculation"],
+      completionTime: translatedServices[4]?.completionTime || "30-45 Days",
       color: "bg-orange-100 text-orange-600",
       bgGradient: "from-orange-50 to-yellow-50",
     },
     {
       id: 6,
-      title: "Grievance Redressal",
-      description: "File complaints and track resolution status in real-time",
+      title: translatedServices[5]?.title || "Grievance Redressal",
+      description:
+        translatedServices[5]?.description ||
+        "File complaints and track resolution status in real-time",
       icon: HelpCircle,
-      features: ["Voice Support", "Real-time Tracking", "SMS Updates"],
-      completionTime: "3-7 Days",
+      features: translatedServices[5]?.features || ["Voice Support", "Real-time Tracking", "SMS Updates"],
+      completionTime: translatedServices[5]?.completionTime || "3-7 Days",
       color: "bg-red-100 text-red-600",
       bgGradient: "from-red-50 to-pink-50",
     },
@@ -638,7 +659,7 @@ const KeyServicesSection = () => {
               >
                 <Shield className="w-4 h-4" />
               </motion.div>
-              Essential Services
+              {t("homeSections.essentialServices")}
             </motion.div>
             <motion.h2
               className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
@@ -646,7 +667,7 @@ const KeyServicesSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              Key Municipal Services
+              {t("homeSections.keyServicesTitle")}
             </motion.h2>
             <motion.p
               className="text-lg text-gray-600 max-w-2xl mx-auto"
@@ -654,9 +675,7 @@ const KeyServicesSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              Access all essential municipal services digitally. From
-              certificates to licenses, everything you need is just a click
-              away.
+              {t("homeSections.keyServicesSub")}
             </motion.p>
           </motion.div>
 
@@ -727,7 +746,7 @@ const KeyServicesSection = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    Access Service
+                    {t("homeSections.accessService")}
                     <motion.div
                       animate={{ x: [0, 5, 0] }}
                       transition={{ duration: 2, repeat: Infinity }}
@@ -747,9 +766,10 @@ const KeyServicesSection = () => {
 
 // Stats Section Component
 const StatsSection = () => {
+  const { t } = useLanguage();
   const stats = [
     {
-      label: "Complaints Resolved",
+      label: t("homeSections.statResolved"),
       value: "15,234",
       change: "+12%",
       trend: "up",
@@ -757,7 +777,7 @@ const StatsSection = () => {
       color: "text-green-600",
     },
     {
-      label: "Average Response Time",
+      label: t("homeSections.statResponse"),
       value: "4.2 hrs",
       change: "-18%",
       trend: "down",
@@ -765,7 +785,7 @@ const StatsSection = () => {
       color: "text-blue-600",
     },
     {
-      label: "Carbon Footprint Saved",
+      label: t("homeSections.statCarbon"),
       value: "2.3 tons",
       change: "+24%",
       trend: "up",
@@ -773,7 +793,7 @@ const StatsSection = () => {
       color: "text-gray-600",
     },
     {
-      label: "Active Citizens",
+      label: t("homeSections.statCitizens"),
       value: "45,678",
       change: "+15%",
       trend: "up",
@@ -789,14 +809,13 @@ const StatsSection = () => {
           {/* Section Header */}
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium mb-4">
-              Smart City Analytics
+              {t("homeSections.analyticsBadge")}
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Real-Time Impact Dashboard
+              {t("homeSections.impactTitle")}
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Track our commitment to efficient governance and citizen
-              satisfaction through transparent, real-time statistics.
+              {t("homeSections.impactSub")}
             </p>
           </div>
 

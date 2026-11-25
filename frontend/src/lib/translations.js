@@ -171,6 +171,113 @@ export const translations = {
       bottomAdmin: "Admin",
       bottomWork: "Tasks",
     },
+    homeSections: {
+      startAssistant: "Start Assistant",
+      startAssistantSub: "Click to open your AI municipal assistant",
+      latestUpdates: "Latest Updates",
+      announcementsTitle: "Municipal Announcements",
+      announcementsSub:
+        "Stay informed about the latest updates, service changes, and important notifications from your municipal corporation.",
+      readMore: "Read More",
+      essentialServices: "Essential Services",
+      keyServicesTitle: "Key Municipal Services",
+      keyServicesSub:
+        "Access all essential municipal services digitally. From certificates to licenses, everything you need is just a click away.",
+      accessService: "Access Service",
+      analyticsBadge: "Smart City Analytics",
+      impactTitle: "Real-Time Impact Dashboard",
+      impactSub:
+        "Track our commitment to efficient governance and citizen satisfaction through transparent, real-time statistics.",
+      statResolved: "Complaints Resolved",
+      statResponse: "Average Response Time",
+      statCarbon: "Carbon Footprint Saved",
+      statCitizens: "Active Citizens",
+      announcements: [
+        {
+          title: "New Digital Water Bill Payment System",
+          description:
+            "Citizens can now pay water bills online through our new digital portal. No more standing in queues!",
+          type: "Service Update",
+          priority: "High",
+        },
+        {
+          title: "Street Light Maintenance Drive",
+          description:
+            "City-wide street light maintenance will be conducted from August 26-30. Report any issues through voice assistant.",
+          type: "Maintenance",
+          priority: "Medium",
+        },
+        {
+          title: "Emergency Contact Numbers Updated",
+          description:
+            "New emergency helpline numbers are now active 24/7 for all municipal services and complaints.",
+          type: "Important",
+          priority: "Critical",
+        },
+        {
+          title: "Waste Collection Schedule Changes",
+          description:
+            "Updated waste collection timings for residential areas. Check your zone's new schedule.",
+          type: "Schedule",
+          priority: "Medium",
+        },
+      ],
+      services: [
+        {
+          title: "Birth & Death Certificates",
+          description:
+            "Apply for and download birth/death certificates online instantly",
+          features: ["Instant Download", "Digital Verification", "24/7 Available"],
+          completionTime: "Same Day",
+        },
+        {
+          title: "Property Tax Payment",
+          description: "Pay property taxes online with multiple payment options",
+          features: ["Online Payment", "Payment History", "Auto Reminders"],
+          completionTime: "Instant",
+        },
+        {
+          title: "Trade License Application",
+          description:
+            "Apply for new trade licenses or renew existing ones digitally",
+          features: ["Digital Application", "Status Tracking", "Document Upload"],
+          completionTime: "7-15 Days",
+        },
+        {
+          title: "Water Connection Services",
+          description: "Apply for new water connections or report service issues",
+          features: ["New Connections", "Billing Support", "Quality Testing"],
+          completionTime: "10-30 Days",
+        },
+        {
+          title: "Building Plan Approval",
+          description:
+            "Submit and track building plan approvals for construction",
+          features: ["Online Submission", "Approval Tracking", "Fee Calculation"],
+          completionTime: "30-45 Days",
+        },
+        {
+          title: "Grievance Redressal",
+          description:
+            "File complaints and track resolution status in real-time",
+          features: ["Voice Support", "Real-time Tracking", "SMS Updates"],
+          completionTime: "3-7 Days",
+        },
+      ],
+    },
+    footerDesc:
+      "Empowering citizens through AI-powered municipal services. Building a smarter, more responsive governance system for Digital India.",
+    footerGovVerified: "Government Verified",
+    footerDataProtected: "Data Protected",
+    footerDepartments: "Departments",
+    footerLegal: "Legal & Compliance",
+    footerHelpline: "24/7 Helpline",
+    footerEmail: "Email Support",
+    footerEmergency: "Emergency",
+    footerFollowUs: "Follow Us",
+    footerCopyright: "© 2025 Government of India",
+    footerSecure: "Website Secure",
+    footerSSL: "SSL Verified",
   },
   hi: {
     common: {
@@ -342,5 +449,112 @@ export const translations = {
       bottomAdmin: "एडमिन",
       bottomWork: "कार्य",
     },
+    homeSections: {
+      startAssistant: "सहायक शुरू करें",
+      startAssistantSub: "अपना AI नगर निगम सहायक खोलने के लिए क्लिक करें",
+      latestUpdates: "ताज़ा अपडेट",
+      announcementsTitle: "नगर निगम घोषणाएं",
+      announcementsSub:
+        "अपने नगर निगम की नवीनतम सूचनाओं, सेवा बदलावों और महत्वपूर्ण अपडेट की जानकारी रखें।",
+      readMore: "और पढ़ें",
+      essentialServices: "आवश्यक सेवाएं",
+      keyServicesTitle: "प्रमुख नगर निगम सेवाएं",
+      keyServicesSub:
+        "सभी आवश्यक नगर निगम सेवाओं का डिजिटल रूप से लाभ उठाएं। प्रमाणपत्र से लाइसेंस तक, सब कुछ बस एक क्लिक दूर है।",
+      accessService: "सेवा का उपयोग करें",
+      analyticsBadge: "स्मार्ट सिटी विश्लेषण",
+      impactTitle: "रीयल-टाइम प्रभाव डैशबोर्ड",
+      impactSub:
+        "पारदर्शी और रीयल-टाइम आंकड़ों के माध्यम से कुशल शासन और नागरिक संतुष्टि की हमारी प्रतिबद्धता देखें।",
+      statResolved: "हल की गई शिकायतें",
+      statResponse: "औसत प्रतिक्रिया समय",
+      statCarbon: "कार्बन फुटप्रिंट बचत",
+      statCitizens: "सक्रिय नागरिक",
+      announcements: [
+        {
+          title: "नई डिजिटल जल बिल भुगतान प्रणाली",
+          description:
+            "नागरिक अब हमारे नए डिजिटल पोर्टल के माध्यम से ऑनलाइन पानी का बिल भर सकते हैं। अब कतार में लगने की जरूरत नहीं!",
+          type: "सेवा अपडेट",
+          priority: "उच्च",
+        },
+        {
+          title: "स्ट्रीट लाइट रखरखाव अभियान",
+          description:
+            "शहर भर में स्ट्रीट लाइट की मरम्मत का अभियान चलाया जा रहा है। किसी भी समस्या की रिपोर्ट वॉइस असिस्टेंट से करें।",
+          type: "रखरखाव",
+          priority: "मध्यम",
+        },
+        {
+          title: "आपातकालीन संपर्क नंबर अपडेट किए गए",
+          description:
+            "सभी नगर निगम सेवाओं और शिकायतों के लिए नए आपातकालीन हेल्पलाइन नंबर अब 24/7 सक्रिय हैं।",
+          type: "महत्वपूर्ण",
+          priority: "अति आवश्यक",
+        },
+        {
+          title: "कचरा संग्रहण समय में बदलाव",
+          description:
+            "आवासीय क्षेत्रों के लिए कचरा संग्रहण का नया समय जारी। अपने क्षेत्र का नया समय जांचें।",
+          type: "समय-सारणी",
+          priority: "मध्यम",
+        },
+      ],
+      services: [
+        {
+          title: "जन्म और मृत्यु प्रमाणपत्र",
+          description:
+            "जन्म/मृत्यु प्रमाणपत्र के लिए ऑनलाइन आवेदन करें और तुरंत डाउनलोड करें",
+          features: ["तुरंत डाउनलोड", "डिजिटल सत्यापन", "24/7 उपलब्ध"],
+          completionTime: "उसी दिन",
+        },
+        {
+          title: "संपत्ति कर भुगतान",
+          description: "कई भुगतान विकल्पों के साथ ऑनलाइन संपत्ति कर का भुगतान करें",
+          features: ["ऑनलाइन भुगतान", "भुगतान इतिहास", "स्वचालित रिमाइंडर"],
+          completionTime: "तुरंत",
+        },
+        {
+          title: "व्यापार लाइसेंस आवेदन",
+          description:
+            "नए व्यापार लाइसेंस के लिए आवेदन करें या मौजूदा लाइसेंस डिजिटल रूप से नवीनीकृत करें",
+          features: ["डिजिटल आवेदन", "स्थिति ट्रैकिंग", "दस्तावेज़ अपलोड"],
+          completionTime: "7-15 दिन",
+        },
+        {
+          title: "पानी कनेक्शन सेवाएं",
+          description: "नए पानी कनेक्शन के लिए आवेदन करें या समस्या की रिपोर्ट करें",
+          features: ["नए कनेक्शन", "बिलिंग सहायता", "गुणवत्ता जांच"],
+          completionTime: "10-30 दिन",
+        },
+        {
+          title: "भवन निर्माण योजना स्वीकृति",
+          description:
+            "निर्माण के लिए भवन योजना स्वीकृति ऑनलाइन जमा करें और ट्रैक करें",
+          features: ["ऑनलाइन सबमिशन", "स्वीकृति ट्रैकिंग", "शुल्क गणना"],
+          completionTime: "30-45 दिन",
+        },
+        {
+          title: "शिकायत निवारण",
+          description:
+            "शिकायत दर्ज करें और रीयल-टाइम में समाधान की स्थिति ट्रैक करें",
+          features: ["वॉइस सहायता", "रीयल-टाइम ट्रैकिंग", "SMS अपडेट"],
+          completionTime: "3-7 दिन",
+        },
+      ],
+    },
+    footerDesc:
+      "AI-संचालित नगर निगम सेवाओं के माध्यम से नागरिकों को सशक्त बनाना। डिजिटल इंडिया के लिए एक स्मार्ट, संवेदनशील शासन प्रणाली का निर्माण।",
+    footerGovVerified: "सरकार द्वारा सत्यापित",
+    footerDataProtected: "डेटा सुरक्षित",
+    footerDepartments: "विभाग",
+    footerLegal: "कानूनी और अनुपालन",
+    footerHelpline: "24/7 हेल्पलाइन",
+    footerEmail: "ईमेल सहायता",
+    footerEmergency: "आपातकालीन",
+    footerFollowUs: "हमसे जुड़ें",
+    footerCopyright: "© 2025 भारत सरकार",
+    footerSecure: "वेबसाइट सुरक्षित",
+    footerSSL: "SSL सत्यापित",
   },
 };
